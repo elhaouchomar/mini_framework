@@ -10,8 +10,8 @@ export const Footer = (activeTodoCount, hasCompleted, filter) => {
 
   return h('footer', { class: 'footer' }, [
     h('span', { class: 'todo-count' }, [
-      h('strong', {}, activeTodoCount),
-      ` item${activeTodoCount !== 1 ? 's' : ''} left`
+      // h('strong', {}, activeTodoCount),
+      `${activeTodoCount} item${activeTodoCount !== 1 ? 's' : ''} left`
     ]),
     activeTodoCount > 0 || hasCompleted ? h('ul', { class: 'filters' }, [
       h('li', {}, 

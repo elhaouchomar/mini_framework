@@ -53,39 +53,43 @@ export const TodoItem = (todo) => {
 
   const children = [];
 
-  // Always add the view div
-  children.push(
-    h('div', { class: 'view' }, [
-      h('input', {
-        class: 'toggle',
-        type: 'checkbox',
-        checked: todo.completed,
-        onChange: () => {
-          const currentState = store.getState();
-          store.setState({
-            ...currentState,
-            todos: currentState.todos.map(t =>
-              t.id === todo.id ? { ...t, completed: !t.completed } : t
-            )
-          });
-        }
-      }),
-      h('label', {
-        onDblClick: handleEdit
-      }, todo.text),
-      h('button', {
-        class: 'destroy',
-        onClick: () => {
-          const currentState = store.getState();
-          store.setState({
-            ...currentState,
-            todos: currentState.todos.filter(t => t.id !== todo.id)
-          });
-        }
-      })
-    ])
-  );
+// في وضع العرض (non editing mode)
+children.push(
+  h('div', {
+    class: 'view',
+    onDblClick: handleEdit 
+  }, [
+    h('input', {
+      class: 'toggle',
+      type: 'checkbox',
+      checked: todo.completed,
+      onChange: () => {
+        const currentState = store.getState();
+        store.setState({
+          ...currentState,
+          todos: currentState.todos.map(t =>
+            t.id === todo.id ? { ...t, completed: !t.completed } : t
+          )
+        });
+      }
+    }),
+    h('label', {
+      onClick: handleEdit // تقدر تزيد هذا باش click على النص يدخل التعديل مباشرة
+    }, todo.text),
+    h('button', {
+      class: 'destroy',
+      onClick: () => {
+        const currentState = store.getState();
+        store.setState({
+          ...currentState,
+          todos: currentState.todos.filter(t => t.id !== todo.id)
+        });
+      }
+    })
+  ])
+);
 
+  
   // Add edit input if editing
   if (isEditing) {
     children.push(
