@@ -2,24 +2,18 @@ import { h } from '../../../framework/core.js';
 import { store } from '../../../framework/store.js';
 import { updateFilter } from '../app.js';
 
-export const Footer = (_todos, filter) => {
-  const { todos } = store.getState();
-  const activeCount = todos.filter(t => !t.completed).length;
-  const hasCompleted = todos.some(t => t.completed);
-
+export const Footer = (activeTodoCount, hasCompleted, filter) => {
   const handleFilterClick = (newFilter) => (e) => {
     e.preventDefault();
-    // window.location.hash = newFilter === 'all' ? '' : newFilter;
     updateFilter(newFilter);
-    // store.setState({ ...store.getState(), filter: newFilter });
   };
 
   return h('footer', { class: 'footer' }, [
     h('span', { class: 'todo-count' }, [
-      h('strong', {}, activeCount),
-      ` item${activeCount !== 1 ? 's' : ''} left`
+      h('strong', {}, activeTodoCount),
+      ` item${activeTodoCount !== 1 ? 's' : ''} left`
     ]),
-    h('ul', { class: 'filters' }, [
+    activeTodoCount > 0 || hasCompleted ? h('ul', { class: 'filters' }, [
       h('li', {}, 
         h('a', {
           class: filter === 'all' ? 'selected' : '',
@@ -41,13 +35,14 @@ export const Footer = (_todos, filter) => {
           onClick: handleFilterClick('completed')
         }, 'Completed')
       )
-    ]),
-    hasCompleted && h('button', {
+    ]) : null,
+    h('button', {
       class: 'clear-completed',
       onClick: () => {
+        const currentState = store.getState();
         store.setState({
-          ...store.getState(),
-          todos: todos.filter(t => !t.completed)
+          ...currentState,
+          todos: currentState.todos.filter(t => !t.completed)
         });
       }
     }, 'Clear completed')

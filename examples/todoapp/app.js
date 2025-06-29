@@ -15,12 +15,9 @@ store.setState({
 
 // Single source of truth for filter state
 export const updateFilter = (newFilter) => {
-  console.log("updated");
   store.setState({ ...store.getState(), filter: newFilter });
-  // Update the hash *without* triggering hashchange again
-  history.replaceState(null, '', newFilter === 'all' ? '#' : `#/${newFilter}`);
-  // window.location.hash = newFilter === 'all' ? '' : newFilter;
-  // store.setState({ ...store.getState(), filter: newFilter });
+  // Update the hash without triggering hashchange again
+  history.replaceState(null, '', newFilter === 'all' ? '#/' : `#/${newFilter}`);
 };
 
 // Handle hash changes
@@ -31,7 +28,6 @@ window.addEventListener('hashchange', () => {
     store.setState({ ...store.getState(), filter: valid });
   }
 });
-
 
 // Render function
 const renderApp = () => {

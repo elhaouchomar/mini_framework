@@ -13,12 +13,32 @@ export const App = () => {
     return true;
   });
 
-  const activeCount = todos.filter(t => !t.completed).length;
+  const activeTodoCount = todos.filter(t => !t.completed).length;
+  const completedCount = todos.filter(t => t.completed).length;
+  const hasCompleted = completedCount > 0;
+
   return h('div', { class: 'todoapp' }, [
     Header(),
-    visibleTodos.length > 0 && h('section', { class: 'main' }, [
+    todos.length > 0 && h('section', { class: 'main' }, [
+      h('input', {
+        id: 'toggle-all',
+        class: 'toggle-all',
+        type: 'checkbox',
+        checked: activeTodoCount === 0 && todos.length > 0,
+        onChange: () => {
+          const shouldCompleteAll = activeTodoCount > 0;
+          store.setState({
+            ...store.getState(),
+            todos: todos.map(todo => ({ ...todo, completed: shouldCompleteAll }))
+          });
+        }
+      }),
+      h('label', { 
+        for: 'toggle-all',
+        class: 'toggle-all-label'
+      }, 'Mark all as complete'),
       TodoList(visibleTodos)
     ]),
-    todos.length > 0 && Footer(null, filter)
+    Footer(activeTodoCount, hasCompleted, filter)
   ]);
 };

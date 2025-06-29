@@ -49,6 +49,10 @@ const createDOM = (vnode) => {
     else if (key === 'ref' && typeof value === 'function') {
       value(el); // Call the ref callback with the DOM element
     }
+    else if (key === 'key') {
+      // Store key for diffing but don't set as attribute
+      el._key = value;
+    }
     else if (value !== undefined && value !== null) {
       // Skip setting value/checked as attributes to prevent input locking
       if (key !== 'value' && key !== 'checked') {
@@ -97,6 +101,13 @@ const diff = (oldVNode, newVNode) => {
     return { type: 'REPLACE', node: newVNode };
   }
 
+  // Check if keys are different (indicates different items)
+  const oldKey = oldVNode.attrs?.key;
+  const newKey = newVNode.attrs?.key;
+  if (oldKey !== newKey && (oldKey !== undefined || newKey !== undefined)) {
+    return { type: 'REPLACE', node: newVNode };
+  }
+
   const attrPatches = diffAttrs(oldVNode.attrs, newVNode.attrs);
   const childPatches = diffChildren(oldVNode.children || [], newVNode.children || []);
 
@@ -111,7 +122,7 @@ const diffAttrs = (oldAttrs = {}, newAttrs = {}) => {
 
   // Check new/changed attributes
   for (const [key, value] of Object.entries(newAttrs)) {
-    if (oldAttrs[key] !== value) {
+    if (key !== 'key' && oldAttrs[key] !== value) {
       patches[key] = value;
       hasChanges = true;
     }
@@ -119,7 +130,7 @@ const diffAttrs = (oldAttrs = {}, newAttrs = {}) => {
 
   // Check removed attributes
   for (const key in oldAttrs) {
-    if (!(key in newAttrs)) {
+    if (key !== 'key' && !(key in newAttrs)) {
       patches[key] = undefined;
       hasChanges = true;
     }
@@ -181,7 +192,9 @@ const applyPatches = (domNode, patches) => {
           else if (key.startsWith('on') && typeof value === 'function') {
             const eventType = key.substring(2).toLowerCase();
             domNode._handlers = domNode._handlers || {};
-            domNode.removeEventListener(eventType, domNode._handlers[eventType]);
+            if (domNode._handlers[eventType]) {
+              domNode.removeEventListener(eventType, domNode._handlers[eventType]);
+            }
             domNode._handlers[eventType] = value;
             domNode.addEventListener(eventType, value);
           } 
@@ -207,8 +220,8 @@ const applyPatches = (domNode, patches) => {
           if (i < domChildren.length) {
             applyPatches(domChildren[i], childPatch);
           } 
-          else if (childPatch) {
-            const newChild = createDOM(childPatch.node || childPatch);
+          else if (childPatch && childPatch.type === 'REPLACE') {
+            const newChild = createDOM(childPatch.node);
             domNode.appendChild(newChild);
           }
         });
