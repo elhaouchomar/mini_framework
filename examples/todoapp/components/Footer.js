@@ -1,5 +1,5 @@
 import { h } from '../../../framework/core.js';
-import { store } from '../../../framework/store.js';
+import { store } from '../../../framework/state.js';
 import { updateFilter } from '../app.js';
 
 export const Footer = (activeTodoCount, hasCompleted, filter) => {
@@ -14,21 +14,21 @@ export const Footer = (activeTodoCount, hasCompleted, filter) => {
       `${activeTodoCount} item${activeTodoCount !== 1 ? 's' : ''} left`
     ]),
     activeTodoCount > 0 || hasCompleted ? h('ul', { class: 'filters' }, [
-      h('li', {}, 
+      h('li', {},
         h('a', {
           class: filter === 'all' ? 'selected' : '',
           href: '#/',
           onClick: handleFilterClick('all')
         }, 'All')
       ),
-      h('li', {}, 
+      h('li', {},
         h('a', {
           class: filter === 'active' ? 'selected' : '',
           href: '#/active',
           onClick: handleFilterClick('active')
         }, 'Active')
       ),
-      h('li', {}, 
+      h('li', {},
         h('a', {
           class: filter === 'completed' ? 'selected' : '',
           href: '#/completed',

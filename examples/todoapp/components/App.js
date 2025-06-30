@@ -1,12 +1,12 @@
 import { h } from '../../../framework/core.js';
-import { store } from '../../../framework/store.js';
+import { store } from '../../../framework/state.js';
 import { Header } from './Header.js';
 import { TodoList } from './TodoList.js';
 import { Footer } from './Footer.js';
 
 export const App = () => {
   const { todos, filter } = store.getState();
-  
+
   const visibleTodos = todos.filter(todo => {
     if (filter === 'active') return !todo.completed;
     if (filter === 'completed') return todo.completed;
@@ -20,6 +20,8 @@ export const App = () => {
   return h('div', { class: 'todoapp' }, [
     Header(),
     todos.length > 0 && h('section', { class: 'main' }, [
+      
+      
       h('input', {
         id: 'toggle-all',
         class: 'toggle-all',
@@ -33,12 +35,15 @@ export const App = () => {
           });
         }
       }),
-      h('label', { 
+      
+      
+      h('label', {
         for: 'toggle-all',
         class: 'toggle-all-label'
       }, 'Mark all as complete'),
       TodoList(visibleTodos)
     ]),
+    
     todos.length > 0 && Footer(activeTodoCount, hasCompleted, filter)
   ]);
 };

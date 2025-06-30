@@ -1,5 +1,5 @@
 import { h, render } from '../../framework/core.js';
-import { store } from '../../framework/store.js';
+import { store } from '../../framework/state.js';
 import { App } from './components/App.js';
 
 // Initialize state with proper filter detection
@@ -20,10 +20,11 @@ export const updateFilter = (newFilter) => {
   history.replaceState(null, '', newFilter === 'all' ? '#/' : `#/${newFilter}`);
 };
 
+// TODO: We need to use our Event Handler
 // Handle hash changes
 window.addEventListener('hashchange', () => {
   const hash = window.location.hash.replace('#/', '');
-  const valid = ['all','active','completed'].includes(hash) ? hash : 'all';
+  const valid = ['all', 'active', 'completed'].includes(hash) ? hash : 'all';
   if (store.getState().filter !== valid) {
     store.setState({ ...store.getState(), filter: valid });
   }
@@ -31,7 +32,9 @@ window.addEventListener('hashchange', () => {
 
 // Render function
 const renderApp = () => {
+  console.log("staaaaaaaaaaaart RENDER-APP");
   render(App(), document.getElementById('app'));
+
 };
 
 // Initial render

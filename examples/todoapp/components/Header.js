@@ -1,5 +1,5 @@
 import { h } from '../../../framework/core.js';
-import { store } from '../../../framework/store.js';
+import { store } from '../../../framework/state.js';
 
 export const Header = () => {
   return h('header', { class: 'header' }, [

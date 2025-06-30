@@ -1,11 +1,13 @@
-// Virtual DOM implementation
+// Virtual DOM implementation with integrated event handling
+import { events } from './event.js';
+
 export const h = (tag, attrs = {}, children = []) => ({
   tag,
   attrs,
   children: Array.isArray(children) ? children.filter(Boolean) : [children].filter(Boolean)
 });
 
-// DOM renderer with diffing algorithm
+// DOM renderer with diffing algorithm and event handling
 let currentVNode = null;
 let rootElement = null;
 
@@ -31,21 +33,15 @@ const createDOM = (vnode) => {
 
   const el = document.createElement(vnode.tag);
 
-  // Set attributes and event handlers
+  // Set attributes and event handlers using the new event system
   for (const [key, value] of Object.entries(vnode.attrs || {})) {
+    console.log("ATTR", key, value);
+
     if (key.startsWith('on') && typeof value === 'function') {
+      // Use our new event system instead of direct addEventListener
       const eventType = key.substring(2).toLowerCase();
-      el._handlers = el._handlers || {};
-      
-      // Remove previous handler if exists
-      if (el._handlers[eventType]) {
-        el.removeEventListener(eventType, el._handlers[eventType]);
-      }
-      
-      // Add new handler
-      el._handlers[eventType] = value;
-      el.addEventListener(eventType, value);
-    } 
+      events.on(el, eventType, value);
+    }
     else if (key === 'ref' && typeof value === 'function') {
       value(el); // Call the ref callback with the DOM element
     }
@@ -92,7 +88,7 @@ const diff = (oldVNode, newVNode) => {
   }
 
   if (typeof oldVNode === 'string' || typeof newVNode === 'string') {
-    return oldVNode !== newVNode 
+    return oldVNode !== newVNode
       ? { type: 'TEXT', value: newVNode }
       : null;
   }
@@ -111,7 +107,7 @@ const diff = (oldVNode, newVNode) => {
   const attrPatches = diffAttrs(oldVNode.attrs, newVNode.attrs);
   const childPatches = diffChildren(oldVNode.children || [], newVNode.children || []);
 
-  return attrPatches || childPatches 
+  return attrPatches || childPatches
     ? { type: 'UPDATE', attrs: attrPatches, children: childPatches }
     : null;
 };
@@ -122,14 +118,17 @@ const diffAttrs = (oldAttrs = {}, newAttrs = {}) => {
 
   // Check new/changed attributes
   for (const [key, value] of Object.entries(newAttrs)) {
+    console.log("ATTR-NEW", key, "new/changed", value);
+    
     if (key !== 'key' && oldAttrs[key] !== value) {
       patches[key] = value;
       hasChanges = true;
     }
   }
-
+  
   // Check removed attributes
   for (const key in oldAttrs) {
+    console.log("ATTR-REMOVE", key);
     if (key !== 'key' && !(key in newAttrs)) {
       patches[key] = undefined;
       hasChanges = true;
@@ -157,26 +156,36 @@ const applyPatches = (domNode, patches) => {
     case 'REPLACE':
       const newDom = createDOM(patches.node);
       domNode.parentNode.replaceChild(newDom, domNode);
+      // Clean up old event handlers
+      events.cleanupElement(domNode);
       break;
-      
+
     case 'REMOVE':
       if (domNode.parentNode) {
+        // Clean up event handlers before removing
+        events.cleanupElement(domNode);
         domNode.parentNode.removeChild(domNode);
       }
       break;
-      
+
     case 'TEXT':
       if (domNode.textContent !== patches.value) {
         domNode.textContent = patches.value;
       }
       break;
-      
+
     case 'UPDATE':
       if (patches.attrs) {
         for (const [key, value] of Object.entries(patches.attrs)) {
           if (value === undefined) {
-            domNode.removeAttribute(key);
-          } 
+            if (key.startsWith('on')) {
+              // Remove event handler using our event system
+              const eventType = key.substring(2).toLowerCase();
+              events.off(domNode, eventType);
+            } else {
+              domNode.removeAttribute(key);
+            }
+          }
           else if (key === 'value') {
             // Only update if value actually changed
             if (domNode.value !== value) {
@@ -190,36 +199,35 @@ const applyPatches = (domNode, patches) => {
             domNode.disabled = value;
           }
           else if (key.startsWith('on') && typeof value === 'function') {
+            // Update event handler using our event system
             const eventType = key.substring(2).toLowerCase();
-            domNode._handlers = domNode._handlers || {};
-            if (domNode._handlers[eventType]) {
-              domNode.removeEventListener(eventType, domNode._handlers[eventType]);
-            }
-            domNode._handlers[eventType] = value;
-            domNode.addEventListener(eventType, value);
-          } 
+            events.off(domNode, eventType); // Remove old handler
+            events.on(domNode, eventType, value); // Add new handler
+          }
           else if (key === 'ref' && typeof value === 'function') {
             value(domNode);
-          } 
+          }
           else {
             domNode.setAttribute(key, value);
           }
         }
       }
-      
+
       if (patches.children) {
         const domChildren = Array.from(domNode.childNodes);
-        
-        // Remove excess DOM nodes
+
+        // Remove excess DOM nodes and clean up their events
         while (domChildren.length > patches.children.length) {
-          domNode.removeChild(domChildren.pop());
+          const childToRemove = domChildren.pop();
+          events.cleanupElement(childToRemove);
+          domNode.removeChild(childToRemove);
         }
-        
+
         // Apply patches to remaining nodes or add new ones
         patches.children.forEach((childPatch, i) => {
           if (i < domChildren.length) {
             applyPatches(domChildren[i], childPatch);
-          } 
+          }
           else if (childPatch && childPatch.type === 'REPLACE') {
             const newChild = createDOM(childPatch.node);
             domNode.appendChild(newChild);
@@ -262,3 +270,6 @@ export class Component {
     throw new Error('Component must implement render()');
   }
 }
+
+// Export events for direct access if needed
+export { events };
