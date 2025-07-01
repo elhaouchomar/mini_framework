@@ -119,13 +119,13 @@ const diffAttrs = (oldAttrs = {}, newAttrs = {}) => {
   // Check new/changed attributes
   for (const [key, value] of Object.entries(newAttrs)) {
     console.log("ATTR-NEW", key, "new/changed", value);
-    
+
     if (key !== 'key' && oldAttrs[key] !== value) {
       patches[key] = value;
       hasChanges = true;
     }
   }
-  
+
   // Check removed attributes
   for (const key in oldAttrs) {
     console.log("ATTR-REMOVE", key);
@@ -139,13 +139,74 @@ const diffAttrs = (oldAttrs = {}, newAttrs = {}) => {
 };
 
 const diffChildren = (oldChildren = [], newChildren = []) => {
-  const patches = [];
-  const len = Math.max(oldChildren.length, newChildren.length);
-
-  for (let i = 0; i < len; i++) {
-    patches[i] = diff(oldChildren[i], newChildren[i]);
+  // If no children, no patches needed
+  if (oldChildren.length === 0 && newChildren.length === 0) {
+    return null;
   }
 
+  // Create maps for key-based diffing
+  const oldKeyMap = new Map();
+  const newKeyMap = new Map();
+  const oldKeyedChildren = [];
+  const newKeyedChildren = [];
+
+  // Process old children
+  oldChildren.forEach((child, index) => {
+    const key = child?.attrs?.key || `index-${index}`;
+    oldKeyMap.set(key, child);
+    oldKeyedChildren.push({ key, child, index });
+  });
+
+  // Process new children
+  newChildren.forEach((child, index) => {
+    const key = child?.attrs?.key || `index-${index}`;
+    newKeyMap.set(key, child);
+    newKeyedChildren.push({ key, child, index });
+  });
+
+  // Create patches array
+  const patches = [];
+  const maxLength = Math.max(oldChildren.length, newChildren.length);
+
+  // First pass: handle keyed children
+  for (let i = 0; i < maxLength; i++) {
+    const oldChild = oldChildren[i];
+    const newChild = newChildren[i];
+
+    if (!oldChild && !newChild) {
+      patches[i] = null;
+      continue;
+    }
+
+    if (!oldChild) {
+      // New child added
+      patches[i] = { type: 'REPLACE', node: newChild };
+      continue;
+    }
+
+    if (!newChild) {
+      // Old child removed
+      patches[i] = { type: 'REMOVE' };
+      continue;
+    }
+
+    // Both children exist, check if they're the same
+    const oldKey = oldChild.attrs?.key;
+    const newKey = newChild.attrs?.key;
+
+    if (oldKey && newKey && oldKey === newKey) {
+      // Same key, diff the children
+      patches[i] = diff(oldChild, newChild);
+    } else if (oldKey && newKey && oldKey !== newKey) {
+      // Different keys, replace
+      patches[i] = { type: 'REPLACE', node: newChild };
+    } else {
+      // No keys or mixed keys, fall back to position-based diffing
+      patches[i] = diff(oldChild, newChild);
+    }
+  }
+
+  // Check if any patches were created
   return patches.some(patch => patch !== null) ? patches : null;
 };
 
@@ -216,23 +277,46 @@ const applyPatches = (domNode, patches) => {
       if (patches.children) {
         const domChildren = Array.from(domNode.childNodes);
 
-        // Remove excess DOM nodes and clean up their events
+        // Apply patches to children
+        patches.children.forEach((childPatch, i) => {
+          if (childPatch === null) {
+            // No change needed
+            return;
+          }
+
+          if (childPatch.type === 'REMOVE') {
+            // Remove child
+            if (i < domChildren.length) {
+              const childToRemove = domChildren[i];
+              events.cleanupElement(childToRemove);
+              domNode.removeChild(childToRemove);
+            }
+          } else if (childPatch.type === 'REPLACE') {
+            // Replace child
+            const newChild = createDOM(childPatch.node);
+            if (i < domChildren.length) {
+              const oldChild = domChildren[i];
+              events.cleanupElement(oldChild);
+              domNode.replaceChild(newChild, oldChild);
+            } else {
+              domNode.appendChild(newChild);
+            }
+          } else if (i < domChildren.length) {
+            // Update existing child
+            applyPatches(domChildren[i], childPatch);
+          } else if (childPatch.type === 'REPLACE') {
+            // Add new child
+            const newChild = createDOM(childPatch.node);
+            domNode.appendChild(newChild);
+          }
+        });
+
+        // Remove any remaining excess children
         while (domChildren.length > patches.children.length) {
           const childToRemove = domChildren.pop();
           events.cleanupElement(childToRemove);
           domNode.removeChild(childToRemove);
         }
-
-        // Apply patches to remaining nodes or add new ones
-        patches.children.forEach((childPatch, i) => {
-          if (i < domChildren.length) {
-            applyPatches(domChildren[i], childPatch);
-          }
-          else if (childPatch && childPatch.type === 'REPLACE') {
-            const newChild = createDOM(childPatch.node);
-            domNode.appendChild(newChild);
-          }
-        });
       }
       break;
   }

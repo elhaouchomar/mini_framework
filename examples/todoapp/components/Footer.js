@@ -1,16 +1,10 @@
-import { h } from '../../../framework/core.js';
+import { h, events } from '../../../framework/core.js';
 import { store } from '../../../framework/state.js';
 import { updateFilter } from '../app.js';
 
 export const Footer = (activeTodoCount, hasCompleted, filter) => {
-  const handleFilterClick = (newFilter) => (e) => {
-    e.preventDefault();
-    updateFilter(newFilter);
-  };
-
   return h('footer', { class: 'footer' }, [
     h('span', { class: 'todo-count' }, [
-      // h('strong', {}, activeTodoCount),
       `${activeTodoCount} item${activeTodoCount !== 1 ? 's' : ''} left`
     ]),
     activeTodoCount > 0 || hasCompleted ? h('ul', { class: 'filters' }, [
@@ -18,33 +12,31 @@ export const Footer = (activeTodoCount, hasCompleted, filter) => {
         h('a', {
           class: filter === 'all' ? 'selected' : '',
           href: '#/',
-          onClick: handleFilterClick('all')
+          'data-filter': 'all'
         }, 'All')
       ),
       h('li', {},
         h('a', {
           class: filter === 'active' ? 'selected' : '',
           href: '#/active',
-          onClick: handleFilterClick('active')
+          'data-filter': 'active'
         }, 'Active')
       ),
       h('li', {},
         h('a', {
           class: filter === 'completed' ? 'selected' : '',
           href: '#/completed',
-          onClick: handleFilterClick('completed')
+          'data-filter': 'completed'
         }, 'Completed')
       )
     ]) : null,
     h('button', {
-      class: 'clear-completed',
-      onClick: () => {
-        const currentState = store.getState();
-        store.setState({
-          ...currentState,
-          todos: currentState.todos.filter(t => !t.completed)
-        });
-      }
+      class: 'clear-completed'
     }, 'Clear completed')
   ]);
+};
+
+// Setup event handlers using Event Manager
+export const setupFooterEvents = () => {
+  events.setupFooterEvents(store, updateFilter);
 };

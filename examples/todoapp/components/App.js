@@ -1,4 +1,4 @@
-import { h } from '../../../framework/core.js';
+import { h, events } from '../../../framework/core.js';
 import { store } from '../../../framework/state.js';
 import { Header } from './Header.js';
 import { TodoList } from './TodoList.js';
@@ -20,30 +20,23 @@ export const App = () => {
   return h('div', { class: 'todoapp' }, [
     Header(),
     todos.length > 0 && h('section', { class: 'main' }, [
-      
-      
       h('input', {
         id: 'toggle-all',
         class: 'toggle-all',
         type: 'checkbox',
-        checked: activeTodoCount === 0 && todos.length > 0,
-        onChange: () => {
-          const shouldCompleteAll = activeTodoCount > 0;
-          store.setState({
-            ...store.getState(),
-            todos: todos.map(todo => ({ ...todo, completed: shouldCompleteAll }))
-          });
-        }
+        checked: activeTodoCount === 0 && todos.length > 0
       }),
-      
-      
       h('label', {
         for: 'toggle-all',
         class: 'toggle-all-label'
       }, 'Mark all as complete'),
       TodoList(visibleTodos)
     ]),
-    
     todos.length > 0 && Footer(activeTodoCount, hasCompleted, filter)
   ]);
+};
+
+// Setup event handlers using Event Manager
+export const setupAppEvents = () => {
+  events.setupAppEvents(store);
 };

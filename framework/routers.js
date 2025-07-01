@@ -1,4 +1,4 @@
-import { h, render } from './core.js';
+import { h, render, events } from './core.js';
 
 export class Router {
   constructor(routes, rootElement) {
@@ -6,8 +6,8 @@ export class Router {
     this.rootElement = rootElement;
     this.currentRoute = null;
 
-    window.addEventListener('popstate', () => this.handleRouteChange());
-    window.addEventListener('load', () => this.handleRouteChange());
+    events.on(window, 'popstate', () => this.handleRouteChange());
+    events.on(window, 'load', () => this.handleRouteChange());
   }
 
   navigateTo(path) {
@@ -17,8 +17,8 @@ export class Router {
 
   handleRouteChange() {
     const path = window.location.pathname;
-    const route = this.routes.find(r => r.path === path) || 
-                 this.routes.find(r => r.path === '*');
+    const route = this.routes.find(r => r.path === path) ||
+      this.routes.find(r => r.path === '*');
 
     if (route && route !== this.currentRoute) {
       this.currentRoute = route;
