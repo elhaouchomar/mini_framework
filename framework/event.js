@@ -193,10 +193,7 @@ class EventManager {
   // Setup individual todo item events
   setupTodoItemEvents(todo, store) {
     const todoElement = document.querySelector(`[data-todo-id="${todo.id}"]`);
-    if (!todoElement) {
-      console.log('Todo element not found for ID:', todo.id);
-      return;
-    }
+    if (!todoElement) return;
 
     const viewDiv = todoElement.querySelector('.view');
     const toggleInput = todoElement.querySelector('.toggle');
@@ -204,17 +201,27 @@ class EventManager {
     const destroyButton = todoElement.querySelector('.destroy');
     const editInput = todoElement.querySelector('.edit');
 
-    // Double click to edit
     if (viewDiv) {
       this.on(viewDiv, 'dblclick', () => {
-        this.editingState.editingId = todo.id;
-        this.editingState.editValue = todo.text;
         const currentState = store.getState();
-        store.setState({ ...currentState });
+        store.setState({
+          ...currentState,
+          editingId: todo.id,
+          editingValue: todo.text,
+        });
+      });
+    }
+    if (label) {
+      this.on(label, 'click', () => {
+        const currentState = store.getState();
+        store.setState({
+          ...currentState,
+          editingId: todo.id,
+          editingValue: todo.text,
+        });
       });
     }
 
-    // Toggle checkbox
     if (toggleInput) {
       this.on(toggleInput, 'change', () => {
         const currentState = store.getState();
@@ -227,17 +234,6 @@ class EventManager {
       });
     }
 
-    // Click label to edit
-    if (label) {
-      this.on(label, 'click', () => {
-        this.editingState.editingId = todo.id;
-        this.editingState.editValue = todo.text;
-        const currentState = store.getState();
-        store.setState({ ...currentState });
-      });
-    }
-
-    // Delete button
     if (destroyButton) {
       this.on(destroyButton, 'click', () => {
         const currentState = store.getState();
@@ -248,50 +244,59 @@ class EventManager {
       });
     }
 
-    // Edit input events
+    // Edit mode input events
     if (editInput) {
       this.on(editInput, 'input', (e) => {
-        this.editingState.editValue = e.target.value;
+        const currentState = store.getState();
+        store.setState({
+          ...currentState,
+          editingValue: e.target.value,
+        });
       });
 
       this.on(editInput, 'keydown', (e) => {
         if (e.key === 'Enter') {
-          this.handleSave(e.target.value, store);
+          this.handleSave(store);
         } else if (e.key === 'Escape') {
           this.handleCancel(store);
         }
       });
 
-      this.on(editInput, 'blur', (e) => {
-        this.handleSave(e.target.value, store);
+      this.on(editInput, 'blur', () => {
+        this.handleSave(store);
       });
     }
   }
 
-  // Handle save for todo editing
-  handleSave(value, store) {
-    const trimmedValue = value.trim();
-    if (trimmedValue) {
-      const currentState = store.getState();
+  handleSave(store) {
+    const { editingId, editingValue, todos } = store.getState();
+    const trimmedValue = editingValue.trim();
+
+    if (editingId && trimmedValue) {
       store.setState({
-        ...currentState,
-        todos: currentState.todos.map(t =>
-          t.id === this.editingState.editingId ? { ...t, text: trimmedValue } : t
-        )
+        ...store.getState(),
+        todos: todos.map(t =>
+          t.id === editingId ? { ...t, text: trimmedValue } : t
+        ),
+        editingId: null,
+        editingValue: '',
+      });
+    } else {
+      // حتى إلا دخل edit mode وخلّى input خاوي رجع بلا تغيير
+      store.setState({
+        ...store.getState(),
+        editingId: null,
+        editingValue: '',
       });
     }
-    this.editingState.editingId = null;
-    this.editingState.editValue = '';
-    const currentState = store.getState();
-    store.setState({ ...currentState });
   }
 
-  // Handle cancel for todo editing
   handleCancel(store) {
-    this.editingState.editingId = null;
-    this.editingState.editValue = '';
-    const currentState = store.getState();
-    store.setState({ ...currentState });
+    store.setState({
+      ...store.getState(),
+      editingId: null,
+      editingValue: '',
+    });
   }
 
   // Initialize editing state

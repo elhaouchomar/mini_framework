@@ -1,13 +1,13 @@
 import { h } from '../../../framework/core.js';
+import { store } from '../../../framework/state.js';
 
 export const TodoItem = (todo) => {
-  console.log("ToDoItem", todo);
-
-  const isEditing = false; // This will be managed by the Event Manager
+  const { editingId, editingValue } = store.getState();
+  const isEditing = editingId === todo.id;
 
   const children = [];
 
-  // في وضع العرض (non editing mode)
+  // view mode
   children.push(
     h('div', {
       class: 'view'
@@ -24,12 +24,12 @@ export const TodoItem = (todo) => {
     ])
   );
 
-  // Add edit input if editing (managed by Event Manager)
+  // edit mode
   if (isEditing) {
     children.push(
       h('input', {
         class: 'edit',
-        value: todo.text,
+        value: editingValue,
         ref: (el) => {
           if (el) {
             el.focus();
@@ -43,6 +43,6 @@ export const TodoItem = (todo) => {
   return h('li', {
     class: `${todo.completed ? 'completed' : ''}${isEditing ? ' editing' : ''}`,
     'data-todo-id': todo.id,
-    key: todo.id // Add key for proper Virtual DOM diffing
+    key: todo.id // for VDOM diff
   }, children);
 };
