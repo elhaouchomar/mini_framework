@@ -6,63 +6,67 @@ import { setupAppEvents } from './components/App.js';
 import { setupFooterEvents } from './components/Footer.js';
 import { setupTodoListEvents } from './components/TodoList.js';
 
-// Initialize state with proper filter detection
-const initialFilter = () => {
+const VALID_FILTERS = ['all', 'active', 'completed'];
+
+// --------------------
+// Extract filter from hash
+// --------------------
+const getFilterFromHash = () => {
   const hash = window.location.hash.replace('#/', '');
-  return ['all', 'active', 'completed'].includes(hash) ? hash : 'all';
+  return VALID_FILTERS.includes(hash) ? hash : 'all';
 };
 
+// --------------------
+// Set initial state using hash filter
+// --------------------
 store.setState({
   todos: [],
-  filter: initialFilter()
+  filter: getFilterFromHash(),
 });
 
-// Single source of truth for filter state
+// --------------------
+// Update store filter if hash changes
+// --------------------
+events.on(window, 'hashchange', () => {
+  const newFilter = getFilterFromHash();
+  if (store.getState().filter !== newFilter) {
+    store.setState({ ...store.getState(), filter: newFilter });
+  }
+});
+
+// --------------------
+// Change filter manually from Footer links
+// --------------------
 export const updateFilter = (newFilter) => {
   store.setState({ ...store.getState(), filter: newFilter });
-  // Update the hash without triggering hashchange again
   history.replaceState(null, '', newFilter === 'all' ? '#/' : `#/${newFilter}`);
 };
 
-// Use Event Manager for hash changes
-events.on(window, 'hashchange', () => {
-  const hash = window.location.hash.replace('#/', '');
-  const valid = ['all', 'active', 'completed'].includes(hash) ? hash : 'all';
-  if (store.getState().filter !== valid) {
-    store.setState({ ...store.getState(), filter: valid });
-  }
-});
-
-// Setup all event handlers with retry mechanism
+// --------------------
+// Setup events for the app
+// --------------------
 const setupAllEvents = () => {
   const { todos } = store.getState();
-
-  try {
-    setupHeaderEvents();
-    setupAppEvents();
-    setupFooterEvents();
-    setupTodoListEvents(todos);
-    console.log('All events setup successfully');
-  } catch (error) {
-    console.error('Error setting up events:', error);
-    // Retry after a short delay
-    setTimeout(setupAllEvents, 50);
-  }
+  setupHeaderEvents();
+  setupAppEvents();
+  setupFooterEvents();
+  setupTodoListEvents(todos);
 };
 
-// Render function
+// --------------------
+// Rendering and re-setup logic
+// --------------------
 const renderApp = () => {
-  console.log("Starting render...");
   render(App(), document.getElementById('app'));
-
-  // Setup events after rendering with multiple attempts
-  setTimeout(setupAllEvents, 10);
-  setTimeout(setupAllEvents, 100);
-  setTimeout(setupAllEvents, 500);
+  setTimeout(setupAllEvents, 0); // ensure after DOM ready
 };
 
+// --------------------
 // Initial render
+// --------------------
 renderApp();
 
-// Subscribe to store changes
+// --------------------
+// Re-render on every state change
+// --------------------
 store.subscribe(renderApp);

@@ -400,3 +400,20 @@ html .clear-completed:active {
   box-shadow: 0 0 2px 2px #cf7d7d;
   outline: 0;
 }
+
+
+.todo-list li.editing {
+  background: #fff;
+  box-shadow: 0 0 2px 2px #cf7d7d;
+  border: 1.5px solid #b83f45;
+  position: relative;
+  transition: box-shadow 0.2s, background 0.2s, border 0.2s;
+}
+
+.todo-list li.editing .edit:focus,
+.todo-list li.editing .edit {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: #fff;
+}
