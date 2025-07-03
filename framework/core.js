@@ -141,32 +141,35 @@ const diffAttrs = (oldAttrs = {}, newAttrs = {}) => {
 const diffChildren = (oldChildren = [], newChildren = []) => {
   const patches = [];
   const keyedOld = new Map();
-  const keyedNew = new Map();
 
-  oldChildren.forEach((child, index) => {
-    const key = child?.attrs?.key ?? index;
-    keyedOld.set(key, { vnode: child, index });
+  oldChildren.forEach((child, i) => {
+    const key = child?.attrs?.key ?? `index-${i}`;
+    keyedOld.set(key, child);
   });
 
-  newChildren.forEach((newChild, newIndex) => {
-    const key = newChild?.attrs?.key ?? newIndex;
-    const old = keyedOld.get(key);
+  const usedKeys = new Set();
 
-    if (old) {
-      patches[newIndex] = diff(old.vnode, newChild);
-      keyedOld.delete(key);
+  newChildren.forEach((newChild, i) => {
+    const key = newChild?.attrs?.key ?? `index-${i}`;
+    const oldChild = keyedOld.get(key);
+    usedKeys.add(key);
+
+    if (oldChild) {
+      patches[i] = diff(oldChild, newChild);
     } else {
-      patches[newIndex] = { type: 'REPLACE', node: newChild };
+      patches[i] = { type: 'REPLACE', node: newChild };
     }
   });
 
-  keyedOld.forEach(({ index }) => {
-    patches[index] = { type: 'REMOVE' };
+  oldChildren.forEach((oldChild, i) => {
+    const key = oldChild?.attrs?.key ?? `index-${i}`;
+    if (!usedKeys.has(key)) {
+      patches[i] = { type: 'REMOVE' };
+    }
   });
 
-  return patches.some(Boolean) ? patches : null;
+  return patches.some(p => p !== null) ? patches : null;
 };
-
 
 const applyPatches = (domNode, patches) => {
   if (!patches || !domNode) return;
@@ -235,43 +238,37 @@ const applyPatches = (domNode, patches) => {
       if (patches.children) {
         const domChildren = Array.from(domNode.childNodes);
 
-        // Apply patches to children
-        patches.children.forEach((childPatch, i) => {
-          if (childPatch === null) {
-            // No change needed
-            return;
-          }
-
-          if (childPatch.type === 'REMOVE') {
-            // Remove child
+        for (let i = patches.children.length - 1; i >= 0; i--) {
+          const patch = patches.children[i];
+          if (patch?.type === 'REMOVE') {
             if (i < domChildren.length) {
               const childToRemove = domChildren[i];
               events.cleanupElement(childToRemove);
               domNode.removeChild(childToRemove);
             }
-          } else if (childPatch.type === 'REPLACE') {
-            // Replace child
-            const newChild = createDOM(childPatch.node);
+          }
+        }
+
+        for (let i = 0; i < patches.children.length; i++) {
+          const patch = patches.children[i];
+
+          if (!patch || patch.type === 'REMOVE') continue;
+
+          if (patch.type === 'REPLACE') {
+            const newChild = createDOM(patch.node);
             if (i < domChildren.length) {
-              const oldChild = domChildren[i];
-              events.cleanupElement(oldChild);
-              domNode.replaceChild(newChild, oldChild);
+              events.cleanupElement(domChildren[i]);
+              domNode.replaceChild(newChild, domChildren[i]);
             } else {
               domNode.appendChild(newChild);
             }
           } else if (i < domChildren.length) {
-            // Update existing child
-            applyPatches(domChildren[i], childPatch);
-          } else if (childPatch.type === 'REPLACE') {
-            // Add new child
-            const newChild = createDOM(childPatch.node);
-            domNode.appendChild(newChild);
+            applyPatches(domChildren[i], patch);
           }
-        });
+        }
 
-        // Remove any remaining excess children
-        while (domChildren.length > patches.children.length) {
-          const childToRemove = domChildren.pop();
+        while (domNode.childNodes.length > patches.children.length) {
+          const childToRemove = domNode.lastChild;
           events.cleanupElement(childToRemove);
           domNode.removeChild(childToRemove);
         }

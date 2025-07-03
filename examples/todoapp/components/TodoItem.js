@@ -7,7 +7,6 @@ export const TodoItem = (todo) => {
 
   const children = [];
 
-  // view mode
   children.push(
     h('div', {
       class: 'view'
@@ -24,7 +23,6 @@ export const TodoItem = (todo) => {
     ])
   );
 
-  // edit mode
   if (isEditing) {
     children.push(
       h('input', {
@@ -43,6 +41,6 @@ export const TodoItem = (todo) => {
   return h('li', {
     class: `${todo.completed ? 'completed' : ''}${isEditing ? ' editing' : ''}`,
     'data-todo-id': todo.id,
-    key: todo.id // for VDOM diff
+    key: todo.id 
   }, children);
 };

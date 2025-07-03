@@ -15,16 +15,16 @@ export const App = () => {
 
   const activeTodoCount = todos.filter(t => !t.completed).length;
   const completedCount = todos.filter(t => t.completed).length;
-  const hasCompleted = completedCount > 0;
 
   return h('div', { class: 'todoapp' }, [
     Header(),
+
     todos.length > 0 && h('section', { class: 'main' }, [
       h('input', {
         id: 'toggle-all',
         class: 'toggle-all',
         type: 'checkbox',
-        checked: activeTodoCount === 0 && todos.length > 0
+        checked: activeTodoCount === 0
       }),
       h('label', {
         for: 'toggle-all',
@@ -32,11 +32,11 @@ export const App = () => {
       }, 'Mark all as complete'),
       TodoList(visibleTodos)
     ]),
-    todos.length > 0 && Footer(activeTodoCount, hasCompleted, filter)
+
+    todos.length > 0 && Footer(activeTodoCount, completedCount > 0, filter)
   ]);
 };
 
-// Setup event handlers using Event Manager
 export const setupAppEvents = () => {
   events.setupAppEvents(store);
 };

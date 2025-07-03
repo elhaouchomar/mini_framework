@@ -8,43 +8,34 @@ import { setupTodoListEvents } from './components/TodoList.js';
 
 const VALID_FILTERS = ['all', 'active', 'completed'];
 
-// --------------------
-// Extract filter from hash
-// --------------------
 const getFilterFromHash = () => {
   const hash = window.location.hash.replace('#/', '');
   return VALID_FILTERS.includes(hash) ? hash : 'all';
 };
 
-// --------------------
-// Set initial state using hash filter
-// --------------------
-store.setState({
-  todos: [],
-  filter: getFilterFromHash(),
-});
-
-// --------------------
-// Update store filter if hash changes
-// --------------------
-events.on(window, 'hashchange', () => {
-  const newFilter = getFilterFromHash();
-  if (store.getState().filter !== newFilter) {
-    store.setState({ ...store.getState(), filter: newFilter });
+const applyHashFilter = () => {
+  const filter = getFilterFromHash();
+  const state = store.getState();
+  if (state.filter !== filter) {
+    store.setState({ ...state, filter });
   }
-});
-
-// --------------------
-// Change filter manually from Footer links
-// --------------------
-export const updateFilter = (newFilter) => {
-  store.setState({ ...store.getState(), filter: newFilter });
-  history.replaceState(null, '', newFilter === 'all' ? '#/' : `#/${newFilter}`);
 };
 
-// --------------------
-// Setup events for the app
-// --------------------
+export const updateFilter = (newFilter) => {
+  const state = store.getState();
+  if (state.filter !== newFilter) {
+    store.setState({ ...state, filter: newFilter });
+    history.pushState(null, '', newFilter === 'all' ? '#/' : `#/${newFilter}`);
+  }
+};
+
+events.on(window, 'hashchange', applyHashFilter);
+
+store.setState({
+  todos: [],
+  filter: 'all',
+});
+
 const setupAllEvents = () => {
   const { todos } = store.getState();
   setupHeaderEvents();
@@ -53,20 +44,13 @@ const setupAllEvents = () => {
   setupTodoListEvents(todos);
 };
 
-// --------------------
-// Rendering and re-setup logic
-// --------------------
 const renderApp = () => {
   render(App(), document.getElementById('app'));
-  setTimeout(setupAllEvents, 0); // ensure after DOM ready
+  setTimeout(setupAllEvents, 10);
 };
 
-// --------------------
-// Initial render
-// --------------------
 renderApp();
 
-// --------------------
-// Re-render on every state change
-// --------------------
+window.dispatchEvent(new HashChangeEvent('hashchange'));
+
 store.subscribe(renderApp);
