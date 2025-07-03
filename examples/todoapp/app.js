@@ -20,27 +20,32 @@ function applyHashFilter() {
   const filter = getFilterFromHash();
   const state = store.getState();
   if (state.filter !== filter) {
+    console.log('Applying hash filter:', filter);
     store.setState({ ...state, filter });
   }
 }
 
 export function updateFilter(newFilter) {
+  console.log('updateFilter called with:', newFilter);
+  
   if (VALID_FILTERS.includes(newFilter)) {
+    // Update state first
+    const state = store.getState();
+    if (state.filter !== newFilter) {
+      console.log('Updating filter state from', state.filter, 'to', newFilter);
+      store.setState({ ...state, filter: newFilter });
+    }
+    
     // Update hash without triggering hashchange event
     const newHash = newFilter === 'all' ? '#/' : `#/${newFilter}`;
     if (window.location.hash !== newHash) {
+      console.log('Updating hash to:', newHash);
       window.location.hash = newHash;
-    }
-    
-    // Update state immediately
-    const state = store.getState();
-    if (state.filter !== newFilter) {
-      store.setState({ ...state, filter: newFilter });
     }
   }
 }
 
-// Initialize state
+// Initialize state with sample data
 store.setState({
   todos: [
     { id: 1, text: 'Learn Mini Framework', completed: false },
@@ -53,28 +58,44 @@ store.setState({
 });
 
 function setupAllEvents() {
+  console.log('Setting up all events...');
   const { todos } = store.getState();
+  
+  // Clear any existing event handlers first
+  document.querySelectorAll('[data-filter], [data-action], .toggle, .destroy, .edit').forEach(el => {
+    if (el._eventId) {
+      events.cleanupElement(el);
+    }
+  });
+  
   setupHeaderEvents();
   setupAppEvents();
   setupFooterEvents();
   setupTodoListEvents(todos);
+  console.log('All events setup complete');
 }
 
 function renderApp() {
+  console.log('Rendering app with state:', store.getState());
   render(App(), document.getElementById('app'));
-  setTimeout(setupAllEvents, 10);
+  // Use a longer timeout to ensure DOM is ready
+  setTimeout(setupAllEvents, 50);
 }
 
 // Listen for hash changes
 window.addEventListener('hashchange', () => {
+  console.log('Hash changed to:', window.location.hash);
   applyHashFilter();
+});
+
+// Subscribe to state changes
+store.subscribe(() => {
+  console.log('State changed, re-rendering...');
+  renderApp();
 });
 
 // Initial render
 renderApp();
-
-// Subscribe to state changes
-store.subscribe(renderApp);
 
 // Apply initial filter from hash
 applyHashFilter();

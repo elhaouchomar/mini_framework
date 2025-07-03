@@ -35,8 +35,6 @@ const createDOM = (vnode) => {
 
   // Set attributes and event handlers using the new event system
   for (const [key, value] of Object.entries(vnode.attrs || {})) {
-    console.log("ATTR", key, value);
-
     if (key.startsWith('on') && typeof value === 'function') {
       // Use our new event system instead of direct addEventListener
       const eventType = key.substring(2).toLowerCase();
@@ -118,8 +116,6 @@ const diffAttrs = (oldAttrs = {}, newAttrs = {}) => {
 
   // Check new/changed attributes
   for (const [key, value] of Object.entries(newAttrs)) {
-    console.log("ATTR-NEW", key, "new/changed", value);
-
     if (key !== 'key' && oldAttrs[key] !== value) {
       patches[key] = value;
       hasChanges = true;
@@ -128,7 +124,6 @@ const diffAttrs = (oldAttrs = {}, newAttrs = {}) => {
 
   // Check removed attributes
   for (const key in oldAttrs) {
-    console.log("ATTR-REMOVE", key);
     if (key !== 'key' && !(key in newAttrs)) {
       patches[key] = undefined;
       hasChanges = true;

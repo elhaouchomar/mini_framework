@@ -40,6 +40,11 @@ class EventManager {
 
   // Register an event handler for a specific element
   on(element, eventType, handler) {
+    if (!element || !eventType || !handler) {
+      console.warn('Invalid parameters for event registration:', { element, eventType, handler });
+      return;
+    }
+
     if (!element._eventId) {
       element._eventId = this.generateEventId();
     }
@@ -50,11 +55,13 @@ class EventManager {
 
     const elementHandlers = this.handlers.get(element._eventId);
     elementHandlers.set(eventType, handler);
+    
+    console.log(`Event registered: ${eventType} on element with ID ${element._eventId}`);
   }
 
   // Remove event handler
   off(element, eventType) {
-    if (!element._eventId) return;
+    if (!element || !element._eventId) return;
 
     const elementHandlers = this.handlers.get(element._eventId);
     if (elementHandlers) {
@@ -145,32 +152,43 @@ class EventManager {
   // Setup footer events
   setupFooterEvents(store, updateFilter) {
     console.log('Setting up footer events...');
-
-    // Filter links
-    const filterLinks = document.querySelectorAll('a[data-filter]');
-    filterLinks.forEach(link => {
-      const filter = link.getAttribute('data-filter');
-      this.on(link, 'click', (e) => {
-        e.preventDefault();
-        console.log('Filter clicked:', filter);
-        updateFilter(filter);
-      });
-    });
-
-    // Clear completed button
-    const clearButton = document.querySelector('[data-action="clear-completed"]');
-    if (clearButton) {
-      this.on(clearButton, 'click', () => {
-        console.log('Clear completed clicked');
-        const currentState = store.getState();
-        store.setState({
-          ...currentState,
-          todos: currentState.todos.filter(t => !t.completed)
+    
+    // Wait a bit for DOM to be ready
+    setTimeout(() => {
+      // Filter links
+      const filterLinks = document.querySelectorAll('a[data-filter]');
+      console.log('Found filter links:', filterLinks.length);
+      
+      filterLinks.forEach(link => {
+        const filter = link.getAttribute('data-filter');
+        console.log('Setting up filter link for:', filter);
+        
+        this.on(link, 'click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log('Filter link clicked:', filter);
+          updateFilter(filter);
         });
       });
-    }
 
-    console.log('Footer events setup complete');
+      // Clear completed button
+      const clearButton = document.querySelector('[data-action="clear-completed"]');
+      if (clearButton) {
+        console.log('Setting up clear completed button');
+        this.on(clearButton, 'click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log('Clear completed clicked');
+          const currentState = store.getState();
+          store.setState({
+            ...currentState,
+            todos: currentState.todos.filter(t => !t.completed)
+          });
+        });
+      }
+
+      console.log('Footer events setup complete');
+    }, 10);
   }
 
   // Setup todo list events
@@ -187,7 +205,10 @@ class EventManager {
   // Setup individual todo item events
   setupTodoItemEvents(todo, store) {
     const todoElement = document.querySelector(`[data-todo-id="${todo.id}"]`);
-    if (!todoElement) return;
+    if (!todoElement) {
+      console.log('Todo element not found for ID:', todo.id);
+      return;
+    }
 
     const viewDiv = todoElement.querySelector('.view');
     const toggleInput = todoElement.querySelector('.toggle');
@@ -205,6 +226,7 @@ class EventManager {
         });
       });
     }
+    
     if (label) {
       this.on(label, 'dblclick', () => {
         const currentState = store.getState();

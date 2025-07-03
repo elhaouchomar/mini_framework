@@ -3,6 +3,8 @@ import { store } from '../../../framework/state.js';
 import { updateFilter } from '../app.js';
 
 export const Footer = (activeTodoCount, hasCompleted, filter) => {
+  console.log('Rendering Footer with filter:', filter);
+  
   return h('footer', { class: 'footer' }, [
     h('span', { class: 'todo-count' }, [
       `${activeTodoCount} item${activeTodoCount !== 1 ? 's' : ''} left`
@@ -40,30 +42,5 @@ export const Footer = (activeTodoCount, hasCompleted, filter) => {
 // Setup event handlers using Event Manager
 export const setupFooterEvents = () => {
   console.log('Setting up footer events...');
-  
-  // Filter links
-  const filterLinks = document.querySelectorAll('a[data-filter]');
-  filterLinks.forEach(link => {
-    const filter = link.getAttribute('data-filter');
-    events.on(link, 'click', (e) => {
-      e.preventDefault();
-      console.log('Filter clicked:', filter);
-      updateFilter(filter);
-    });
-  });
-
-  // Clear completed button
-  const clearButton = document.querySelector('[data-action="clear-completed"]');
-  if (clearButton) {
-    events.on(clearButton, 'click', () => {
-      console.log('Clear completed clicked');
-      const currentState = store.getState();
-      store.setState({
-        ...currentState,
-        todos: currentState.todos.filter(t => !t.completed)
-      });
-    });
-  }
-
-  console.log('Footer events setup complete');
+  events.setupFooterEvents(store, updateFilter);
 };
