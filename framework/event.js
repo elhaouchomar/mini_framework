@@ -190,7 +190,6 @@ class EventManager {
     const toggleInput = todoElement.querySelector('.toggle');
     if (toggleInput && !toggleInput._eventId) {
       this.on(toggleInput, 'change', (e) => {
-        e.preventDefault();
         e.stopPropagation();
         const currentState = store.getState();
         store.setState({

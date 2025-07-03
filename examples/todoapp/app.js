@@ -51,6 +51,13 @@ store.setState({
 function setupAllEvents() {
   const { todos } = store.getState();
   
+  // Clear existing event handlers to prevent duplicates
+  document.querySelectorAll('[data-todo-id]').forEach(el => {
+    if (el._eventId) {
+      delete el._eventId;
+    }
+  });
+  
   setupHeaderEvents();
   setupAppEvents();
   setupFooterEvents();
