@@ -48,24 +48,18 @@ store.setState({
   editingValue: ''
 });
 
-let eventsSetup = false;
-
 function setupAllEvents() {
-  if (eventsSetup) return;
-  
   const { todos } = store.getState();
   
   setupHeaderEvents();
   setupAppEvents();
   setupFooterEvents();
   setupTodoListEvents(todos);
-  
-  eventsSetup = true;
 }
 
 function renderApp() {
   render(App(), document.getElementById('app'));
-  // Setup events only once
+  // Setup events after a short delay to ensure DOM is ready
   setTimeout(setupAllEvents, 10);
 }
 

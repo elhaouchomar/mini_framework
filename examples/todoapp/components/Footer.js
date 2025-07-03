@@ -32,8 +32,7 @@ export const Footer = (activeTodoCount, hasCompleted, filter) => {
       )
     ]),
     hasCompleted && h('button', {
-      class: 'clear-completed',
-      'data-action': 'clear-completed'
+      class: 'clear-completed'
     }, 'Clear completed')
   ]);
 };

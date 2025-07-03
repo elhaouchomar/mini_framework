@@ -58,11 +58,7 @@ class EventManager {
     }
 
     const elementHandlers = this.handlers.get(element._eventId);
-    
-    // Don't register the same event type twice
-    if (!elementHandlers.has(eventType)) {
-      elementHandlers.set(eventType, handler);
-    }
+    elementHandlers.set(eventType, handler);
   }
 
   // Remove event handler
@@ -163,7 +159,7 @@ class EventManager {
     });
 
     // Clear completed button
-    const clearButton = document.querySelector('[data-action="clear-completed"]');
+    const clearButton = document.querySelector('.clear-completed');
     if (clearButton && !clearButton._eventId) {
       this.on(clearButton, 'click', (e) => {
         e.preventDefault();
@@ -177,120 +173,86 @@ class EventManager {
     }
   }
 
-  // Setup todo list events
+  // Setup todo list events with proper delegation
   setupTodoListEvents(todos, store) {
-    // Use event delegation for todo items
-    const todoList = document.querySelector('.todo-list');
-    if (todoList && !todoList._eventId) {
-      this.on(todoList, 'click', (e) => {
-        this.handleTodoListClick(e, store);
-      });
-      
-      this.on(todoList, 'dblclick', (e) => {
-        this.handleTodoListDblClick(e, store);
-      });
-      
-      this.on(todoList, 'change', (e) => {
-        this.handleTodoListChange(e, store);
-      });
-      
-      this.on(todoList, 'keydown', (e) => {
-        this.handleTodoListKeydown(e, store);
-      });
-      
-      this.on(todoList, 'input', (e) => {
-        this.handleTodoListInput(e, store);
-      });
-      
-      this.on(todoList, 'blur', (e) => {
-        this.handleTodoListBlur(e, store);
-      });
-    }
+    // Set up individual todo item events
+    todos.forEach(todo => {
+      this.setupTodoItemEvents(todo, store);
+    });
   }
 
-  handleTodoListClick(e, store) {
-    const action = e.target.getAttribute('data-action');
-    const todoId = parseInt(e.target.getAttribute('data-todo-id'));
-    
-    if (action === 'destroy' && todoId) {
-      e.preventDefault();
-      e.stopPropagation();
-      const currentState = store.getState();
-      store.setState({
-        ...currentState,
-        todos: currentState.todos.filter(t => t.id !== todoId)
-      });
-    }
-  }
+  // Setup individual todo item events
+  setupTodoItemEvents(todo, store) {
+    const todoElement = document.querySelector(`[data-todo-id="${todo.id}"]`);
+    if (!todoElement) return;
 
-  handleTodoListDblClick(e, store) {
-    const action = e.target.getAttribute('data-action');
-    const todoId = parseInt(e.target.getAttribute('data-todo-id'));
-    
-    if (action === 'edit' && todoId) {
-      e.preventDefault();
-      e.stopPropagation();
-      const currentState = store.getState();
-      const todo = currentState.todos.find(t => t.id === todoId);
-      if (todo) {
+    // Toggle checkbox
+    const toggleInput = todoElement.querySelector('.toggle');
+    if (toggleInput && !toggleInput._eventId) {
+      this.on(toggleInput, 'change', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const currentState = store.getState();
         store.setState({
           ...currentState,
-          editingId: todoId,
+          todos: currentState.todos.map(t =>
+            t.id === todo.id ? { ...t, completed: !t.completed } : t
+          )
+        });
+      });
+    }
+
+    // Edit on double click
+    const label = todoElement.querySelector('label');
+    if (label && !label._eventId) {
+      this.on(label, 'dblclick', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const currentState = store.getState();
+        store.setState({
+          ...currentState,
+          editingId: todo.id,
           editingValue: todo.text
         });
-      }
-    }
-  }
-
-  handleTodoListChange(e, store) {
-    const action = e.target.getAttribute('data-action');
-    const todoId = parseInt(e.target.getAttribute('data-todo-id'));
-    
-    if (action === 'toggle' && todoId) {
-      e.preventDefault();
-      e.stopPropagation();
-      const currentState = store.getState();
-      store.setState({
-        ...currentState,
-        todos: currentState.todos.map(t =>
-          t.id === todoId ? { ...t, completed: !t.completed } : t
-        )
       });
     }
-  }
 
-  handleTodoListKeydown(e, store) {
-    const action = e.target.getAttribute('data-action');
-    const todoId = parseInt(e.target.getAttribute('data-todo-id'));
-    
-    if (action === 'edit-input' && todoId) {
-      if (e.key === 'Enter') {
+    // Delete button
+    const destroyButton = todoElement.querySelector('.destroy');
+    if (destroyButton && !destroyButton._eventId) {
+      this.on(destroyButton, 'click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const currentState = store.getState();
+        store.setState({
+          ...currentState,
+          todos: currentState.todos.filter(t => t.id !== todo.id)
+        });
+      });
+    }
+
+    // Edit input events
+    const editInput = todoElement.querySelector('.edit');
+    if (editInput && !editInput._eventId) {
+      this.on(editInput, 'input', (e) => {
+        const currentState = store.getState();
+        store.setState({
+          ...currentState,
+          editingValue: e.target.value
+        });
+      });
+
+      this.on(editInput, 'keydown', (e) => {
+        if (e.key === 'Enter') {
+          this.handleSave(store);
+        } else if (e.key === 'Escape') {
+          this.handleCancel(store);
+        }
+      });
+
+      this.on(editInput, 'blur', () => {
         this.handleSave(store);
-      } else if (e.key === 'Escape') {
-        this.handleCancel(store);
-      }
-    }
-  }
-
-  handleTodoListInput(e, store) {
-    const action = e.target.getAttribute('data-action');
-    const todoId = parseInt(e.target.getAttribute('data-todo-id'));
-    
-    if (action === 'edit-input' && todoId) {
-      const currentState = store.getState();
-      store.setState({
-        ...currentState,
-        editingValue: e.target.value
       });
-    }
-  }
-
-  handleTodoListBlur(e, store) {
-    const action = e.target.getAttribute('data-action');
-    const todoId = parseInt(e.target.getAttribute('data-todo-id'));
-    
-    if (action === 'edit-input' && todoId) {
-      this.handleSave(store);
     }
   }
 

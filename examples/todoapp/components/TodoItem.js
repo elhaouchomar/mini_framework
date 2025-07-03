@@ -8,30 +8,21 @@ export const TodoItem = (todo) => {
   const children = [];
 
   // View mode
-  if (!isEditing) {
-    children.push(
-      h('div', {
-        class: 'view'
-      }, [
-        h('input', {
-          class: 'toggle',
-          type: 'checkbox',
-          checked: todo.completed,
-          'data-todo-id': todo.id,
-          'data-action': 'toggle'
-        }),
-        h('label', {
-          'data-todo-id': todo.id,
-          'data-action': 'edit'
-        }, todo.text),
-        h('button', {
-          class: 'destroy',
-          'data-todo-id': todo.id,
-          'data-action': 'destroy'
-        })
-      ])
-    );
-  }
+  children.push(
+    h('div', {
+      class: 'view'
+    }, [
+      h('input', {
+        class: 'toggle',
+        type: 'checkbox',
+        checked: todo.completed
+      }),
+      h('label', {}, todo.text),
+      h('button', {
+        class: 'destroy'
+      })
+    ])
+  );
 
   // Edit mode
   if (isEditing) {
@@ -39,8 +30,6 @@ export const TodoItem = (todo) => {
       h('input', {
         class: 'edit',
         value: editingValue,
-        'data-todo-id': todo.id,
-        'data-action': 'edit-input',
         ref: (el) => {
           if (el) {
             el.focus();
