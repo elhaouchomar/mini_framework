@@ -1,4 +1,4 @@
-import { h, render, events } from '../../framework/core.js';
+import { h, render } from '../../framework/core.js';
 import { store } from '../../framework/state.js';
 import { App } from './components/App.js';
 import { setupHeaderEvents } from './components/Header.js';
@@ -8,49 +8,53 @@ import { setupTodoListEvents } from './components/TodoList.js';
 
 const VALID_FILTERS = ['all', 'active', 'completed'];
 
-const getFilterFromHash = () => {
-  const hash = window.location.hash.replace('#/', '');
-  return VALID_FILTERS.includes(hash) ? hash : 'all';
-};
+function getFilterFromHash() {
+  const hash = window.location.hash.replace(/^#\/?/, '');
+  if (hash === '' || hash === 'all') return 'all';
+  if (hash === 'active') return 'active';
+  if (hash === 'completed') return 'completed';
+  return 'all';
+}
 
-const applyHashFilter = () => {
+function applyHashFilter() {
   const filter = getFilterFromHash();
   const state = store.getState();
   if (state.filter !== filter) {
     store.setState({ ...state, filter });
   }
-};
+  renderApp();
+}
 
-export const updateFilter = (newFilter) => {
-  const state = store.getState();
-  if (state.filter !== newFilter) {
-    store.setState({ ...state, filter: newFilter });
-    history.pushState(null, '', newFilter === 'all' ? '#/' : `#/${newFilter}`);
-  }
-};
+export function updateFilter(newFilter) {
+  window.location.hash = '/' + (newFilter === 'all' ? '' : newFilter);
+}
 
-events.on(window, 'hashchange', applyHashFilter);
-
+// Initialize state
 store.setState({
   todos: [],
-  filter: 'all',
+  filter: getFilterFromHash(),
+  editingId: null,
+  editingValue: ''
 });
 
-const setupAllEvents = () => {
+function setupAllEvents() {
   const { todos } = store.getState();
   setupHeaderEvents();
   setupAppEvents();
   setupFooterEvents();
   setupTodoListEvents(todos);
-};
+}
 
-const renderApp = () => {
+function renderApp() {
   render(App(), document.getElementById('app'));
   setTimeout(setupAllEvents, 10);
-};
+}
 
+// Listen for hash changes
+window.addEventListener('hashchange', applyHashFilter);
+
+// Initial render
 renderApp();
 
-window.dispatchEvent(new HashChangeEvent('hashchange'));
-
+// Subscribe to state changes
 store.subscribe(renderApp);
