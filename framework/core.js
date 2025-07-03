@@ -139,76 +139,34 @@ const diffAttrs = (oldAttrs = {}, newAttrs = {}) => {
 };
 
 const diffChildren = (oldChildren = [], newChildren = []) => {
-  // If no children, no patches needed
-  if (oldChildren.length === 0 && newChildren.length === 0) {
-    return null;
-  }
-
-  // Create maps for key-based diffing
-  const oldKeyMap = new Map();
-  const newKeyMap = new Map();
-  const oldKeyedChildren = [];
-  const newKeyedChildren = [];
-
-  // Process old children
-  oldChildren.forEach((child, index) => {
-    const key = child?.attrs?.key || `index-${index}`;
-    oldKeyMap.set(key, child);
-    oldKeyedChildren.push({ key, child, index });
-  });
-
-  // Process new children
-  newChildren.forEach((child, index) => {
-    const key = child?.attrs?.key || `index-${index}`;
-    newKeyMap.set(key, child);
-    newKeyedChildren.push({ key, child, index });
-  });
-
-  // Create patches array
   const patches = [];
-  const maxLength = Math.max(oldChildren.length, newChildren.length);
+  const keyedOld = new Map();
+  const keyedNew = new Map();
 
-  // First pass: handle keyed children
-  for (let i = 0; i < maxLength; i++) {
-    const oldChild = oldChildren[i];
-    const newChild = newChildren[i];
+  oldChildren.forEach((child, index) => {
+    const key = child?.attrs?.key ?? index;
+    keyedOld.set(key, { vnode: child, index });
+  });
 
-    if (!oldChild && !newChild) {
-      patches[i] = null;
-      continue;
-    }
+  newChildren.forEach((newChild, newIndex) => {
+    const key = newChild?.attrs?.key ?? newIndex;
+    const old = keyedOld.get(key);
 
-    if (!oldChild) {
-      // New child added
-      patches[i] = { type: 'REPLACE', node: newChild };
-      continue;
-    }
-
-    if (!newChild) {
-      // Old child removed
-      patches[i] = { type: 'REMOVE' };
-      continue;
-    }
-
-    // Both children exist, check if they're the same
-    const oldKey = oldChild.attrs?.key;
-    const newKey = newChild.attrs?.key;
-
-    if (oldKey && newKey && oldKey === newKey) {
-      // Same key, diff the children
-      patches[i] = diff(oldChild, newChild);
-    } else if (oldKey && newKey && oldKey !== newKey) {
-      // Different keys, replace
-      patches[i] = { type: 'REPLACE', node: newChild };
+    if (old) {
+      patches[newIndex] = diff(old.vnode, newChild);
+      keyedOld.delete(key);
     } else {
-      // No keys or mixed keys, fall back to position-based diffing
-      patches[i] = diff(oldChild, newChild);
+      patches[newIndex] = { type: 'REPLACE', node: newChild };
     }
-  }
+  });
 
-  // Check if any patches were created
-  return patches.some(patch => patch !== null) ? patches : null;
+  keyedOld.forEach(({ index }) => {
+    patches[index] = { type: 'REMOVE' };
+  });
+
+  return patches.some(Boolean) ? patches : null;
 };
+
 
 const applyPatches = (domNode, patches) => {
   if (!patches || !domNode) return;
