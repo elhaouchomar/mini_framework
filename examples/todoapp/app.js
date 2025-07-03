@@ -22,16 +22,31 @@ function applyHashFilter() {
   if (state.filter !== filter) {
     store.setState({ ...state, filter });
   }
-  renderApp();
 }
 
 export function updateFilter(newFilter) {
-  window.location.hash = '/' + (newFilter === 'all' ? '' : newFilter);
+  if (VALID_FILTERS.includes(newFilter)) {
+    // Update hash without triggering hashchange event
+    const newHash = newFilter === 'all' ? '#/' : `#/${newFilter}`;
+    if (window.location.hash !== newHash) {
+      window.location.hash = newHash;
+    }
+    
+    // Update state immediately
+    const state = store.getState();
+    if (state.filter !== newFilter) {
+      store.setState({ ...state, filter: newFilter });
+    }
+  }
 }
 
 // Initialize state
 store.setState({
-  todos: [],
+  todos: [
+    { id: 1, text: 'Learn Mini Framework', completed: false },
+    { id: 2, text: 'Build Todo App', completed: true },
+    { id: 3, text: 'Test Filter Functionality', completed: false }
+  ],
   filter: getFilterFromHash(),
   editingId: null,
   editingValue: ''
@@ -51,10 +66,15 @@ function renderApp() {
 }
 
 // Listen for hash changes
-window.addEventListener('hashchange', applyHashFilter);
+window.addEventListener('hashchange', () => {
+  applyHashFilter();
+});
 
 // Initial render
 renderApp();
 
 // Subscribe to state changes
 store.subscribe(renderApp);
+
+// Apply initial filter from hash
+applyHashFilter();

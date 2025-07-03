@@ -24,7 +24,7 @@ export const App = () => {
         id: 'toggle-all',
         class: 'toggle-all',
         type: 'checkbox',
-        checked: activeTodoCount === 0
+        checked: activeTodoCount === 0 && todos.length > 0
       }),
       h('label', {
         for: 'toggle-all',
@@ -38,5 +38,23 @@ export const App = () => {
 };
 
 export const setupAppEvents = () => {
-  events.setupAppEvents(store);
+  console.log('Setting up app events...');
+
+  const toggleAllInput = document.getElementById('toggle-all');
+
+  if (toggleAllInput) {
+    events.on(toggleAllInput, 'change', (e) => {
+      console.log('Toggle all clicked, checked:', e.target.checked);
+      const { todos } = store.getState();
+      const shouldCompleteAll = e.target.checked;
+
+      store.setState({
+        ...store.getState(),
+        todos: todos.map(todo => ({ ...todo, completed: shouldCompleteAll }))
+      });
+    });
+    console.log('Toggle all event setup complete');
+  } else {
+    console.log('Toggle all input not found');
+  }
 };

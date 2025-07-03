@@ -70,9 +70,16 @@ class EventManager {
 
   // Clean up all handlers for an element
   cleanupElement(element) {
-    if (element._eventId) {
-      this.handlers.delete(element._eventId);
-      delete element._eventId;
+    if (!element || !element._eventId) return;
+    
+    this.handlers.delete(element._eventId);
+    delete element._eventId;
+    
+    // Also clean up child elements
+    if (element.children) {
+      Array.from(element.children).forEach(child => {
+        this.cleanupElement(child);
+      });
     }
   }
 
@@ -119,10 +126,10 @@ class EventManager {
     const toggleAllInput = document.getElementById('toggle-all');
 
     if (toggleAllInput) {
-      this.on(toggleAllInput, 'change', () => {
+      this.on(toggleAllInput, 'change', (e) => {
+        console.log('Toggle all clicked, checked:', e.target.checked);
         const { todos } = store.getState();
-        const activeTodoCount = todos.filter(t => !t.completed).length;
-        const shouldCompleteAll = activeTodoCount > 0;
+        const shouldCompleteAll = e.target.checked;
 
         store.setState({
           ...store.getState(),
@@ -140,34 +147,21 @@ class EventManager {
     console.log('Setting up footer events...');
 
     // Filter links
-    const allLink = document.querySelector('a[data-filter="all"]');
-    const activeLink = document.querySelector('a[data-filter="active"]');
-    const completedLink = document.querySelector('a[data-filter="completed"]');
-    const clearButton = document.querySelector('.clear-completed');
-
-    if (allLink) {
-      this.on(allLink, 'click', (e) => {
+    const filterLinks = document.querySelectorAll('a[data-filter]');
+    filterLinks.forEach(link => {
+      const filter = link.getAttribute('data-filter');
+      this.on(link, 'click', (e) => {
         e.preventDefault();
-        updateFilter('all');
+        console.log('Filter clicked:', filter);
+        updateFilter(filter);
       });
-    }
+    });
 
-    if (activeLink) {
-      this.on(activeLink, 'click', (e) => {
-        e.preventDefault();
-        updateFilter('active');
-      });
-    }
-
-    if (completedLink) {
-      this.on(completedLink, 'click', (e) => {
-        e.preventDefault();
-        updateFilter('completed');
-      });
-    }
-
+    // Clear completed button
+    const clearButton = document.querySelector('[data-action="clear-completed"]');
     if (clearButton) {
       this.on(clearButton, 'click', () => {
+        console.log('Clear completed clicked');
         const currentState = store.getState();
         store.setState({
           ...currentState,
@@ -212,7 +206,7 @@ class EventManager {
       });
     }
     if (label) {
-      this.on(label, 'click', () => {
+      this.on(label, 'dblclick', () => {
         const currentState = store.getState();
         store.setState({
           ...currentState,
@@ -281,8 +275,16 @@ class EventManager {
         editingId: null,
         editingValue: '',
       });
+    } else if (editingId && !trimmedValue) {
+      // If empty, delete the todo
+      store.setState({
+        ...store.getState(),
+        todos: todos.filter(t => t.id !== editingId),
+        editingId: null,
+        editingValue: '',
+      });
     } else {
-      // حتى إلا دخل edit mode وخلّى input خاوي رجع بلا تغيير
+      // Cancel editing
       store.setState({
         ...store.getState(),
         editingId: null,
@@ -298,12 +300,6 @@ class EventManager {
       editingValue: '',
     });
   }
-
-  // Initialize editing state
-  editingState = {
-    editingId: null,
-    editValue: ''
-  };
 }
 
 // Create global instance

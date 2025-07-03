@@ -7,7 +7,7 @@ export const Footer = (activeTodoCount, hasCompleted, filter) => {
     h('span', { class: 'todo-count' }, [
       `${activeTodoCount} item${activeTodoCount !== 1 ? 's' : ''} left`
     ]),
-    activeTodoCount > 0 || hasCompleted ? h('ul', { class: 'filters' }, [
+    h('ul', { class: 'filters' }, [
       h('li', {},
         h('a', {
           class: filter === 'all' ? 'selected' : '',
@@ -29,14 +29,41 @@ export const Footer = (activeTodoCount, hasCompleted, filter) => {
           'data-filter': 'completed'
         }, 'Completed')
       )
-    ]) : null,
-    h('button', {
-      class: 'clear-completed'
+    ]),
+    hasCompleted && h('button', {
+      class: 'clear-completed',
+      'data-action': 'clear-completed'
     }, 'Clear completed')
   ]);
 };
 
 // Setup event handlers using Event Manager
 export const setupFooterEvents = () => {
-  events.setupFooterEvents(store, updateFilter);
+  console.log('Setting up footer events...');
+  
+  // Filter links
+  const filterLinks = document.querySelectorAll('a[data-filter]');
+  filterLinks.forEach(link => {
+    const filter = link.getAttribute('data-filter');
+    events.on(link, 'click', (e) => {
+      e.preventDefault();
+      console.log('Filter clicked:', filter);
+      updateFilter(filter);
+    });
+  });
+
+  // Clear completed button
+  const clearButton = document.querySelector('[data-action="clear-completed"]');
+  if (clearButton) {
+    events.on(clearButton, 'click', () => {
+      console.log('Clear completed clicked');
+      const currentState = store.getState();
+      store.setState({
+        ...currentState,
+        todos: currentState.todos.filter(t => !t.completed)
+      });
+    });
+  }
+
+  console.log('Footer events setup complete');
 };
