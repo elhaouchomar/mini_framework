@@ -2,10 +2,13 @@
 class EventManager {
   constructor() {
     this.handlers = new Map();
+    this.globalEventsSetup = false;
     this.setupGlobalDelegation();
   }
 
   setupGlobalDelegation() {
+    if (this.globalEventsSetup) return;
+    
     // Common events that we'll delegate globally
     const eventTypes = [
       'click', 'dblclick', 'keydown', 'keyup', 'input',
@@ -17,6 +20,8 @@ class EventManager {
         this.handleDelegatedEvent(e);
       }, true);
     });
+    
+    this.globalEventsSetup = true;
   }
 
   handleDelegatedEvent(event) {
@@ -41,7 +46,6 @@ class EventManager {
   // Register an event handler for a specific element
   on(element, eventType, handler) {
     if (!element || !eventType || !handler) {
-      console.warn('Invalid parameters for event registration:', { element, eventType, handler });
       return;
     }
 
@@ -54,9 +58,11 @@ class EventManager {
     }
 
     const elementHandlers = this.handlers.get(element._eventId);
-    elementHandlers.set(eventType, handler);
     
-    console.log(`Event registered: ${eventType} on element with ID ${element._eventId}`);
+    // Don't register the same event type twice
+    if (!elementHandlers.has(eventType)) {
+      elementHandlers.set(eventType, handler);
+    }
   }
 
   // Remove event handler
@@ -98,9 +104,7 @@ class EventManager {
   // Setup header events
   setupHeaderEvents(store) {
     const input = document.querySelector('.new-todo');
-    if (input) {
-      console.log('Setting up header events for input:', input);
-
+    if (input && !input._eventId) {
       const handleNewTodo = (e) => {
         if (e.key === 'Enter') {
           const value = e.target.value.trim();
@@ -121,20 +125,15 @@ class EventManager {
       };
 
       this.on(input, 'keydown', handleNewTodo);
-    } else {
-      console.log('Header input not found');
     }
   }
 
   // Setup app events
   setupAppEvents(store) {
-    console.log('Setting up app events...');
-
     const toggleAllInput = document.getElementById('toggle-all');
 
-    if (toggleAllInput) {
+    if (toggleAllInput && !toggleAllInput._eventId) {
       this.on(toggleAllInput, 'change', (e) => {
-        console.log('Toggle all clicked, checked:', e.target.checked);
         const { todos } = store.getState();
         const shouldCompleteAll = e.target.checked;
 
@@ -143,89 +142,70 @@ class EventManager {
           todos: todos.map(todo => ({ ...todo, completed: shouldCompleteAll }))
         });
       });
-      console.log('Toggle all event setup complete');
-    } else {
-      console.log('Toggle all input not found');
     }
   }
 
   // Setup footer events
   setupFooterEvents(store, updateFilter) {
-    console.log('Setting up footer events...');
+    // Filter links
+    const filterLinks = document.querySelectorAll('a[data-filter]');
     
-    // Wait a bit for DOM to be ready
-    setTimeout(() => {
-      // Filter links
-      const filterLinks = document.querySelectorAll('a[data-filter]');
-      console.log('Found filter links:', filterLinks.length);
-      
-      filterLinks.forEach(link => {
+    filterLinks.forEach(link => {
+      if (!link._eventId) {
         const filter = link.getAttribute('data-filter');
-        console.log('Setting up filter link for:', filter);
         
         this.on(link, 'click', (e) => {
           e.preventDefault();
           e.stopPropagation();
-          console.log('Filter link clicked:', filter);
           updateFilter(filter);
         });
-      });
-
-      // Clear completed button
-      const clearButton = document.querySelector('[data-action="clear-completed"]');
-      if (clearButton) {
-        console.log('Setting up clear completed button');
-        this.on(clearButton, 'click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          console.log('Clear completed clicked');
-          const currentState = store.getState();
-          store.setState({
-            ...currentState,
-            todos: currentState.todos.filter(t => !t.completed)
-          });
-        });
       }
+    });
 
-      console.log('Footer events setup complete');
-    }, 10);
+    // Clear completed button
+    const clearButton = document.querySelector('[data-action="clear-completed"]');
+    if (clearButton && !clearButton._eventId) {
+      this.on(clearButton, 'click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const currentState = store.getState();
+        store.setState({
+          ...currentState,
+          todos: currentState.todos.filter(t => !t.completed)
+        });
+      });
+    }
   }
 
   // Setup todo list events
   setupTodoListEvents(todos, store) {
-    console.log('Setting up todo list events for', todos.length, 'todos');
-
     // Use event delegation for todo items
-    setTimeout(() => {
-      const todoList = document.querySelector('.todo-list');
-      if (todoList) {
-        this.on(todoList, 'click', (e) => {
-          this.handleTodoListClick(e, store);
-        });
-        
-        this.on(todoList, 'dblclick', (e) => {
-          this.handleTodoListDblClick(e, store);
-        });
-        
-        this.on(todoList, 'change', (e) => {
-          this.handleTodoListChange(e, store);
-        });
-        
-        this.on(todoList, 'keydown', (e) => {
-          this.handleTodoListKeydown(e, store);
-        });
-        
-        this.on(todoList, 'input', (e) => {
-          this.handleTodoListInput(e, store);
-        });
-        
-        this.on(todoList, 'blur', (e) => {
-          this.handleTodoListBlur(e, store);
-        });
-      }
-    }, 10);
-
-    console.log('Todo list events setup complete');
+    const todoList = document.querySelector('.todo-list');
+    if (todoList && !todoList._eventId) {
+      this.on(todoList, 'click', (e) => {
+        this.handleTodoListClick(e, store);
+      });
+      
+      this.on(todoList, 'dblclick', (e) => {
+        this.handleTodoListDblClick(e, store);
+      });
+      
+      this.on(todoList, 'change', (e) => {
+        this.handleTodoListChange(e, store);
+      });
+      
+      this.on(todoList, 'keydown', (e) => {
+        this.handleTodoListKeydown(e, store);
+      });
+      
+      this.on(todoList, 'input', (e) => {
+        this.handleTodoListInput(e, store);
+      });
+      
+      this.on(todoList, 'blur', (e) => {
+        this.handleTodoListBlur(e, store);
+      });
+    }
   }
 
   handleTodoListClick(e, store) {
@@ -233,7 +213,6 @@ class EventManager {
     const todoId = parseInt(e.target.getAttribute('data-todo-id'));
     
     if (action === 'destroy' && todoId) {
-      console.log('Destroying todo:', todoId);
       const currentState = store.getState();
       store.setState({
         ...currentState,
@@ -247,7 +226,6 @@ class EventManager {
     const todoId = parseInt(e.target.getAttribute('data-todo-id'));
     
     if (action === 'edit' && todoId) {
-      console.log('Editing todo:', todoId);
       const currentState = store.getState();
       const todo = currentState.todos.find(t => t.id === todoId);
       if (todo) {
@@ -265,7 +243,6 @@ class EventManager {
     const todoId = parseInt(e.target.getAttribute('data-todo-id'));
     
     if (action === 'toggle' && todoId) {
-      console.log('Toggling todo:', todoId);
       const currentState = store.getState();
       store.setState({
         ...currentState,
@@ -282,10 +259,8 @@ class EventManager {
     
     if (action === 'edit-input' && todoId) {
       if (e.key === 'Enter') {
-        console.log('Saving todo edit:', todoId);
         this.handleSave(store);
       } else if (e.key === 'Escape') {
-        console.log('Canceling todo edit:', todoId);
         this.handleCancel(store);
       }
     }
@@ -309,7 +284,6 @@ class EventManager {
     const todoId = parseInt(e.target.getAttribute('data-todo-id'));
     
     if (action === 'edit-input' && todoId) {
-      console.log('Saving todo edit on blur:', todoId);
       this.handleSave(store);
     }
   }

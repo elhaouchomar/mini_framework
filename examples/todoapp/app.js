@@ -20,26 +20,21 @@ function applyHashFilter() {
   const filter = getFilterFromHash();
   const state = store.getState();
   if (state.filter !== filter) {
-    console.log('Applying hash filter:', filter);
     store.setState({ ...state, filter });
   }
 }
 
 export function updateFilter(newFilter) {
-  console.log('updateFilter called with:', newFilter);
-  
   if (VALID_FILTERS.includes(newFilter)) {
     // Update state first
     const state = store.getState();
     if (state.filter !== newFilter) {
-      console.log('Updating filter state from', state.filter, 'to', newFilter);
       store.setState({ ...state, filter: newFilter });
     }
     
     // Update hash without triggering hashchange event
     const newHash = newFilter === 'all' ? '#/' : `#/${newFilter}`;
     if (window.location.hash !== newHash) {
-      console.log('Updating hash to:', newHash);
       window.location.hash = newHash;
     }
   }
@@ -53,33 +48,34 @@ store.setState({
   editingValue: ''
 });
 
+let eventsSetup = false;
+
 function setupAllEvents() {
-  console.log('Setting up all events...');
+  if (eventsSetup) return;
+  
   const { todos } = store.getState();
   
   setupHeaderEvents();
   setupAppEvents();
   setupFooterEvents();
   setupTodoListEvents(todos);
-  console.log('All events setup complete');
+  
+  eventsSetup = true;
 }
 
 function renderApp() {
-  console.log('Rendering app with state:', store.getState());
   render(App(), document.getElementById('app'));
-  // Use a longer timeout to ensure DOM is ready
-  setTimeout(setupAllEvents, 50);
+  // Setup events only once
+  setTimeout(setupAllEvents, 10);
 }
 
 // Listen for hash changes
 window.addEventListener('hashchange', () => {
-  console.log('Hash changed to:', window.location.hash);
   applyHashFilter();
 });
 
 // Subscribe to state changes
 store.subscribe(() => {
-  console.log('State changed, re-rendering...');
   renderApp();
 });
 

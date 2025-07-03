@@ -3,8 +3,6 @@ import { store } from '../../../framework/state.js';
 import { updateFilter } from '../app.js';
 
 export const Footer = (activeTodoCount, hasCompleted, filter) => {
-  console.log('Rendering Footer with filter:', filter);
-  
   return h('footer', { class: 'footer' }, [
     h('span', { class: 'todo-count' }, [
       h('strong', {}, activeTodoCount.toString()),
@@ -42,6 +40,5 @@ export const Footer = (activeTodoCount, hasCompleted, filter) => {
 
 // Setup event handlers using Event Manager
 export const setupFooterEvents = () => {
-  console.log('Setting up footer events...');
   events.setupFooterEvents(store, updateFilter);
 };
