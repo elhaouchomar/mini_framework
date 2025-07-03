@@ -213,6 +213,8 @@ class EventManager {
     const todoId = parseInt(e.target.getAttribute('data-todo-id'));
     
     if (action === 'destroy' && todoId) {
+      e.preventDefault();
+      e.stopPropagation();
       const currentState = store.getState();
       store.setState({
         ...currentState,
@@ -226,6 +228,8 @@ class EventManager {
     const todoId = parseInt(e.target.getAttribute('data-todo-id'));
     
     if (action === 'edit' && todoId) {
+      e.preventDefault();
+      e.stopPropagation();
       const currentState = store.getState();
       const todo = currentState.todos.find(t => t.id === todoId);
       if (todo) {
@@ -243,6 +247,8 @@ class EventManager {
     const todoId = parseInt(e.target.getAttribute('data-todo-id'));
     
     if (action === 'toggle' && todoId) {
+      e.preventDefault();
+      e.stopPropagation();
       const currentState = store.getState();
       store.setState({
         ...currentState,
