@@ -45,13 +45,9 @@ export function updateFilter(newFilter) {
   }
 }
 
-// Initialize state with sample data
+// Initialize state - start with empty todos like TodoMVC
 store.setState({
-  todos: [
-    { id: 1, text: 'Learn Mini Framework', completed: false },
-    { id: 2, text: 'Build Todo App', completed: true },
-    { id: 3, text: 'Test Filter Functionality', completed: false }
-  ],
+  todos: [],
   filter: getFilterFromHash(),
   editingId: null,
   editingValue: ''
@@ -60,13 +56,6 @@ store.setState({
 function setupAllEvents() {
   console.log('Setting up all events...');
   const { todos } = store.getState();
-  
-  // Clear any existing event handlers first
-  document.querySelectorAll('[data-filter], [data-action], .toggle, .destroy, .edit').forEach(el => {
-    if (el._eventId) {
-      events.cleanupElement(el);
-    }
-  });
   
   setupHeaderEvents();
   setupAppEvents();

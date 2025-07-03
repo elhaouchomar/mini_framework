@@ -19,6 +19,7 @@ export const App = () => {
   return h('div', { class: 'todoapp' }, [
     Header(),
 
+    // Only show main section if there are todos
     todos.length > 0 && h('section', { class: 'main' }, [
       h('input', {
         id: 'toggle-all',
@@ -33,6 +34,7 @@ export const App = () => {
       TodoList(visibleTodos)
     ]),
 
+    // Only show footer if there are todos
     todos.length > 0 && Footer(activeTodoCount, completedCount > 0, filter)
   ]);
 };

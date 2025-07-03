@@ -195,92 +195,122 @@ class EventManager {
   setupTodoListEvents(todos, store) {
     console.log('Setting up todo list events for', todos.length, 'todos');
 
-    todos.forEach(todo => {
-      this.setupTodoItemEvents(todo, store);
-    });
+    // Use event delegation for todo items
+    setTimeout(() => {
+      const todoList = document.querySelector('.todo-list');
+      if (todoList) {
+        this.on(todoList, 'click', (e) => {
+          this.handleTodoListClick(e, store);
+        });
+        
+        this.on(todoList, 'dblclick', (e) => {
+          this.handleTodoListDblClick(e, store);
+        });
+        
+        this.on(todoList, 'change', (e) => {
+          this.handleTodoListChange(e, store);
+        });
+        
+        this.on(todoList, 'keydown', (e) => {
+          this.handleTodoListKeydown(e, store);
+        });
+        
+        this.on(todoList, 'input', (e) => {
+          this.handleTodoListInput(e, store);
+        });
+        
+        this.on(todoList, 'blur', (e) => {
+          this.handleTodoListBlur(e, store);
+        });
+      }
+    }, 10);
 
     console.log('Todo list events setup complete');
   }
 
-  // Setup individual todo item events
-  setupTodoItemEvents(todo, store) {
-    const todoElement = document.querySelector(`[data-todo-id="${todo.id}"]`);
-    if (!todoElement) {
-      console.log('Todo element not found for ID:', todo.id);
-      return;
-    }
-
-    const viewDiv = todoElement.querySelector('.view');
-    const toggleInput = todoElement.querySelector('.toggle');
-    const label = todoElement.querySelector('label');
-    const destroyButton = todoElement.querySelector('.destroy');
-    const editInput = todoElement.querySelector('.edit');
-
-    if (viewDiv) {
-      this.on(viewDiv, 'dblclick', () => {
-        const currentState = store.getState();
-        store.setState({
-          ...currentState,
-          editingId: todo.id,
-          editingValue: todo.text,
-        });
-      });
-    }
+  handleTodoListClick(e, store) {
+    const action = e.target.getAttribute('data-action');
+    const todoId = parseInt(e.target.getAttribute('data-todo-id'));
     
-    if (label) {
-      this.on(label, 'dblclick', () => {
-        const currentState = store.getState();
-        store.setState({
-          ...currentState,
-          editingId: todo.id,
-          editingValue: todo.text,
-        });
+    if (action === 'destroy' && todoId) {
+      console.log('Destroying todo:', todoId);
+      const currentState = store.getState();
+      store.setState({
+        ...currentState,
+        todos: currentState.todos.filter(t => t.id !== todoId)
       });
     }
+  }
 
-    if (toggleInput) {
-      this.on(toggleInput, 'change', () => {
-        const currentState = store.getState();
+  handleTodoListDblClick(e, store) {
+    const action = e.target.getAttribute('data-action');
+    const todoId = parseInt(e.target.getAttribute('data-todo-id'));
+    
+    if (action === 'edit' && todoId) {
+      console.log('Editing todo:', todoId);
+      const currentState = store.getState();
+      const todo = currentState.todos.find(t => t.id === todoId);
+      if (todo) {
         store.setState({
           ...currentState,
-          todos: currentState.todos.map(t =>
-            t.id === todo.id ? { ...t, completed: !t.completed } : t
-          )
+          editingId: todoId,
+          editingValue: todo.text
         });
+      }
+    }
+  }
+
+  handleTodoListChange(e, store) {
+    const action = e.target.getAttribute('data-action');
+    const todoId = parseInt(e.target.getAttribute('data-todo-id'));
+    
+    if (action === 'toggle' && todoId) {
+      console.log('Toggling todo:', todoId);
+      const currentState = store.getState();
+      store.setState({
+        ...currentState,
+        todos: currentState.todos.map(t =>
+          t.id === todoId ? { ...t, completed: !t.completed } : t
+        )
       });
     }
+  }
 
-    if (destroyButton) {
-      this.on(destroyButton, 'click', () => {
-        const currentState = store.getState();
-        store.setState({
-          ...currentState,
-          todos: currentState.todos.filter(t => t.id !== todo.id)
-        });
-      });
-    }
-
-    // Edit mode input events
-    if (editInput) {
-      this.on(editInput, 'input', (e) => {
-        const currentState = store.getState();
-        store.setState({
-          ...currentState,
-          editingValue: e.target.value,
-        });
-      });
-
-      this.on(editInput, 'keydown', (e) => {
-        if (e.key === 'Enter') {
-          this.handleSave(store);
-        } else if (e.key === 'Escape') {
-          this.handleCancel(store);
-        }
-      });
-
-      this.on(editInput, 'blur', () => {
+  handleTodoListKeydown(e, store) {
+    const action = e.target.getAttribute('data-action');
+    const todoId = parseInt(e.target.getAttribute('data-todo-id'));
+    
+    if (action === 'edit-input' && todoId) {
+      if (e.key === 'Enter') {
+        console.log('Saving todo edit:', todoId);
         this.handleSave(store);
+      } else if (e.key === 'Escape') {
+        console.log('Canceling todo edit:', todoId);
+        this.handleCancel(store);
+      }
+    }
+  }
+
+  handleTodoListInput(e, store) {
+    const action = e.target.getAttribute('data-action');
+    const todoId = parseInt(e.target.getAttribute('data-todo-id'));
+    
+    if (action === 'edit-input' && todoId) {
+      const currentState = store.getState();
+      store.setState({
+        ...currentState,
+        editingValue: e.target.value
       });
+    }
+  }
+
+  handleTodoListBlur(e, store) {
+    const action = e.target.getAttribute('data-action');
+    const todoId = parseInt(e.target.getAttribute('data-todo-id'));
+    
+    if (action === 'edit-input' && todoId) {
+      console.log('Saving todo edit on blur:', todoId);
+      this.handleSave(store);
     }
   }
 
@@ -298,7 +328,7 @@ class EventManager {
         editingValue: '',
       });
     } else if (editingId && !trimmedValue) {
-      // If empty, delete the todo
+      // If empty, delete the todo (TodoMVC behavior)
       store.setState({
         ...store.getState(),
         todos: todos.filter(t => t.id !== editingId),
