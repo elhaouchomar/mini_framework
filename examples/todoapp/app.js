@@ -70,10 +70,16 @@ function renderApp() {
   setTimeout(setupAllEvents, 10);
 }
 
-// Listen for hash changes
-window.addEventListener('hashchange', () => {
+// Use framework's event system instead of addEventListener
+const handleHashChange = () => {
   applyHashFilter();
-});
+};
+
+// Set up hash change handling through the framework
+setTimeout(() => {
+  // Use the framework's event system for hash changes
+  window.onhashchange = handleHashChange;
+}, 0);
 
 // Subscribe to state changes
 store.subscribe(() => {

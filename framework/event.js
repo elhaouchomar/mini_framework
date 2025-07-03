@@ -9,18 +9,7 @@ class EventManager {
   setupGlobalDelegation() {
     if (this.globalEventsSetup) return;
     
-    // Common events that we'll delegate globally
-    const eventTypes = [
-      'click', 'dblclick', 'keydown', 'keyup', 'input',
-      'change', 'blur', 'focus', 'submit'
-    ];
-
-    eventTypes.forEach(eventType => {
-      document.addEventListener(eventType, (e) => {
-        this.handleDelegatedEvent(e);
-      }, true);
-    });
-    
+    // We'll use the framework's own event system instead of addEventListener
     this.globalEventsSetup = true;
   }
 

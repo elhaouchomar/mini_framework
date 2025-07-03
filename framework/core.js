@@ -33,12 +33,16 @@ const createDOM = (vnode) => {
 
   const el = document.createElement(vnode.tag);
 
-  // Set attributes and event handlers using the new event system
+  // Set attributes and event handlers using the framework's event system
   for (const [key, value] of Object.entries(vnode.attrs || {})) {
     if (key.startsWith('on') && typeof value === 'function') {
-      // Use our new event system instead of direct addEventListener
+      // Use our framework's event system - no addEventListener!
       const eventType = key.substring(2).toLowerCase();
-      events.on(el, eventType, value);
+      
+      // Set up event handler through our event manager
+      setTimeout(() => {
+        events.on(el, eventType, value);
+      }, 0);
     }
     else if (key === 'ref' && typeof value === 'function') {
       value(el); // Call the ref callback with the DOM element
@@ -219,7 +223,9 @@ const applyPatches = (domNode, patches) => {
             // Update event handler using our event system
             const eventType = key.substring(2).toLowerCase();
             events.off(domNode, eventType); // Remove old handler
-            events.on(domNode, eventType, value); // Add new handler
+            setTimeout(() => {
+              events.on(domNode, eventType, value); // Add new handler
+            }, 0);
           }
           else if (key === 'ref' && typeof value === 'function') {
             value(domNode);
