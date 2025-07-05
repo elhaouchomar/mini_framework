@@ -4,46 +4,48 @@ import { Header } from './Header.js';
 import { TodoList } from './TodoList.js';
 import { Footer } from './Footer.js';
 
+/* ---------- UI ---------- */
 export const App = () => {
   const { todos, filter } = store.getState();
 
-  const visibleTodos = todos.filter(todo => {
-    if (filter === 'active') return !todo.completed;
-    if (filter === 'completed') return todo.completed;
-    return true;
-  });
+  const visible = todos.filter(t =>
+    filter === 'active' ? !t.completed :
+      filter === 'completed' ? t.completed :
+        true);
 
-  const activeTodoCount = todos.filter(t => !t.completed).length;
-  const completedCount = todos.filter(t => t.completed).length;
-  const hasCompleted = completedCount > 0;
+  const activeCnt = todos.filter(t => !t.completed).length;
+  const completedCnt = todos.length - activeCnt;
 
-  return h('div', {
-    class: 'todoapp', // onclick: () => {
-    //   console.log("hhh");
-
-    // }
-  }, [
+  return h('div', { class: 'todoapp' }, [
     Header(),
-    todos.length > 0 && h('section', { class: 'main' }, [
-      visibleTodos.length > 0 && h('label', {
+    todos.length && h('section', { class: 'main' }, [
+      visible.length && h('input', {
         id: 'toggle-all',
         class: 'toggle-all',
         type: 'checkbox',
-        checked: activeTodoCount === 0 && todos.length > 0
+        checked: activeCnt === 0
       }),
-
-
-      visibleTodos.length > 0 && h('label', {
+      visible.length && h('label', {
         for: 'toggle-all',
         class: 'toggle-all-label'
       }, 'Mark all as complete'),
-      TodoList(visibleTodos)
+      TodoList(visible)
     ]),
-    todos.length > 0 && Footer(activeTodoCount, hasCompleted, filter)
+    todos.length && Footer(activeCnt, completedCnt > 0, filter)
   ]);
 };
 
-// Setup event handlers using Event Manager
+/* ---------- behaviour ---------- */
 export const setupAppEvents = () => {
-  events.setupAppEvents(store);
+  const toggle = document.getElementById('toggle-all');
+  if (!toggle) return;
+
+  events.on(toggle, 'click', () => {
+    const { todos } = store.getState();
+    const completeAll = todos.some(t => !t.completed);
+    store.setState({
+      ...store.getState(),
+      todos: todos.map(t => ({ ...t, completed: completeAll }))
+    });
+  });
 };

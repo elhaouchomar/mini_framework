@@ -1,42 +1,47 @@
 import { h, events } from '../../../framework/core.js';
 import { store } from '../../../framework/state.js';
-import { updateFilter } from '../app.js';
+import { updateFilter } from '../app.js';   // from entry module
 
-export const Footer = (activeTodoCount, hasCompleted, filter) => {
-  return h('footer', { class: 'footer' }, [
-    h('span', { class: 'todo-count' }, [
-      `${activeTodoCount} item${activeTodoCount !== 1 ? 's' : ''} left`
-    ]),
-    activeTodoCount > 0 || hasCompleted ? h('ul', { class: 'filters' }, [
-      h('li', {},
-        h('a', {
-          class: filter === 'all' ? 'selected' : '',
-          href: '#/',
-          'data-filter': 'all'
-        }, 'All')
-      ),
-      h('li', {},
-        h('a', {
-          class: filter === 'active' ? 'selected' : '',
-          href: '#/active',
-          'data-filter': 'active'
-        }, 'Active')
-      ),
-      h('li', {},
-        h('a', {
-          class: filter === 'completed' ? 'selected' : '',
-          href: '#/completed',
-          'data-filter': 'completed'
-        }, 'Completed')
-      )
-    ]) : null,
-    h('button', {
-      class: 'clear-completed'
-    }, 'Clear completed')
+/* ---------- UI ---------- */
+export const Footer = (activeCnt, hasCompleted, filter) =>
+  h('footer', { class: 'footer' }, [
+    h('span', { class: 'todo-count' },
+      `${activeCnt} item${activeCnt !== 1 ? 's' : ''} left`),
+
+    h('ul', { class: 'filters' }, [
+      ['all', 'All'],
+      ['active', 'Active'],
+      ['completed', 'Completed']
+    ].map(([key, label]) =>
+      h('li', {}, [
+        h('a', { 'data-filter': key, class: filter === key ? 'selected' : '' }, label)
+      ]))
+    ),
+
+    hasCompleted &&
+    h('button', { class: 'clear-completed' }, 'Clear completed')
   ]);
-};
 
-// Setup event handlers using Event Manager
+/* ---------- behaviour ---------- */
 export const setupFooterEvents = () => {
-  events.setupFooterEvents(store, updateFilter);
+  ['all', 'active', 'completed'].forEach(key => {
+    const link = document.querySelector(`a[data-filter="${key}"]`);
+    if (link) {
+      events.on(link, 'click', e => {
+        e.preventDefault();
+        updateFilter(key);
+      });
+    }
+  });
+
+  const clearBtn = document.querySelector('.clear-completed');
+  if (clearBtn) {
+    events.on(clearBtn, 'click', () => {
+      const { todos } = store.getState();
+      store.setState({
+        ...store.getState(),
+        todos: todos.filter(t => !t.completed)
+      });
+    });
+  }
 };
