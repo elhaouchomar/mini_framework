@@ -209,6 +209,7 @@ class EventManager {
     // Double click to edit
     if (viewDiv) {
       this.on(viewDiv, 'dblclick', () => {
+        if (e.target.classList?.contains('toggle')) return;
         const current = store.getState();
         store.setState({ ...current, editingId: todo.id, editingValue: todo.text });
       });
