@@ -27,13 +27,21 @@ class EventManager {
   // Register an event handler for a specific element
   on(element, eventType, handler) {
     if (!element || !eventType || !handler) return;
-    if (!this.rootListeners.has(eventType)) {
-      document.addEventListener(
-        eventType,
-        (e) => this.handleDelegatedEvent(e),
-        true
-      );
+    // 1. attach one global property-hook per *eventType*
+    if (element !== document && element !== window && !this.rootListeners.has(eventType)) {
+      document['on' + eventType] = (e) => this.handleDelegatedEvent(e);
       this.rootListeners.add(eventType);
+    }
+
+    // 2. special case: root-level events that never bubble (popstate, load, etc.)
+    if ((element === window || element === document) && !this.rootListeners.has('root:' + eventType)) {
+      const prev = element['on' + eventType];             // preserve an existing handler if any
+      element['on' + eventType] = (e) => {
+        if (prev) prev.call(element, e);                  // run user code first
+        handler.call(element, e);
+      };
+      this.rootListeners.add('root:' + eventType);
+      return;                                             // nothing else to record
     }
     if (!element._eventId) {
       element._eventId = this.generateEventId();
@@ -255,7 +263,7 @@ class EventManager {
       });
 
       this.on(editInput, 'blur', () => {
-        this.handleSave(store);  
+        this.handleSave(store);
       });
     }
   }
