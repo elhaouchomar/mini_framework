@@ -17,18 +17,23 @@ export const App = () => {
   const completedCount = todos.filter(t => t.completed).length;
   const hasCompleted = completedCount > 0;
 
-  return h('div', { class: 'todoapp' }, [
+  return h('div', {
+    class: 'todoapp', // onclick: () => {
+    //   console.log("hhh");
+
+    // }
+  }, [
     Header(),
     todos.length > 0 && h('section', { class: 'main' }, [
-       visibleTodos.length > 0 && h('label', {   
+      visibleTodos.length > 0 && h('label', {
         id: 'toggle-all',
         class: 'toggle-all',
         type: 'checkbox',
         checked: activeTodoCount === 0 && todos.length > 0
       }),
-      
-      
-       visibleTodos.length > 0 && h('label', {  
+
+
+      visibleTodos.length > 0 && h('label', {
         for: 'toggle-all',
         class: 'toggle-all-label'
       }, 'Mark all as complete'),

@@ -194,6 +194,7 @@ class EventManager {
 
   // Setup individual todo item events
   setupTodoItemEvents(todo, store) {
+    // TO be FIXED
     const todoElement = document.querySelector(`[data-todo-id="${todo.id}"]`);
     if (!todoElement) {
       console.log('Todo element not found for ID:', todo.id);
