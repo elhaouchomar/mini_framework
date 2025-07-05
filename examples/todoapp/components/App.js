@@ -17,8 +17,6 @@ export const App = () => {
   const completedCount = todos.filter(t => t.completed).length;
   const hasCompleted = completedCount > 0;
 
-  console.log("+++++++++++++++++++++++", filter);
-
   return h('div', { class: 'todoapp' }, [
     Header(),
     todos.length > 0 && h('section', { class: 'main' }, [
