@@ -5,10 +5,9 @@ import { updateFilter } from '../app.js';
 export const Footer = (activeTodoCount, hasCompleted, filter) => {
   return h('footer', { class: 'footer' }, [
     h('span', { class: 'todo-count' }, [
-      h('strong', {}, activeTodoCount.toString()),
-      ` item${activeTodoCount !== 1 ? 's' : ''} left`
+      `${activeTodoCount} item${activeTodoCount !== 1 ? 's' : ''} left`
     ]),
-    h('ul', { class: 'filters' }, [
+    activeTodoCount > 0 || hasCompleted ? h('ul', { class: 'filters' }, [
       h('li', {},
         h('a', {
           class: filter === 'all' ? 'selected' : '',
@@ -30,8 +29,8 @@ export const Footer = (activeTodoCount, hasCompleted, filter) => {
           'data-filter': 'completed'
         }, 'Completed')
       )
-    ]),
-    hasCompleted && h('button', {
+    ]) : null,
+    h('button', {
       class: 'clear-completed'
     }, 'Clear completed')
   ]);

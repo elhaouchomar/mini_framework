@@ -15,30 +15,32 @@ export const App = () => {
 
   const activeTodoCount = todos.filter(t => !t.completed).length;
   const completedCount = todos.filter(t => t.completed).length;
+  const hasCompleted = completedCount > 0;
+
+  console.log("+++++++++++++++++++++++", filter);
 
   return h('div', { class: 'todoapp' }, [
     Header(),
-
-    // Only show main section if there are todos
     todos.length > 0 && h('section', { class: 'main' }, [
-      h('input', {
+       visibleTodos.length > 0 && h('label', {   
         id: 'toggle-all',
         class: 'toggle-all',
         type: 'checkbox',
         checked: activeTodoCount === 0 && todos.length > 0
       }),
-      h('label', {
+      
+      
+       visibleTodos.length > 0 && h('label', {  
         for: 'toggle-all',
         class: 'toggle-all-label'
       }, 'Mark all as complete'),
       TodoList(visibleTodos)
     ]),
-
-    // Only show footer if there are todos
-    todos.length > 0 && Footer(activeTodoCount, completedCount > 0, filter)
+    todos.length > 0 && Footer(activeTodoCount, hasCompleted, filter)
   ]);
 };
 
+// Setup event handlers using Event Manager
 export const setupAppEvents = () => {
   events.setupAppEvents(store);
 };

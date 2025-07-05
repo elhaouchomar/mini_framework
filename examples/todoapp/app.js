@@ -1,4 +1,4 @@
-import { h, render } from '../../framework/core.js';
+import { h, render, events } from '../../framework/core.js';
 import { store } from '../../framework/state.js';
 import { App } from './components/App.js';
 import { setupHeaderEvents } from './components/Header.js';
@@ -6,88 +6,63 @@ import { setupAppEvents } from './components/App.js';
 import { setupFooterEvents } from './components/Footer.js';
 import { setupTodoListEvents } from './components/TodoList.js';
 
-const VALID_FILTERS = ['all', 'active', 'completed'];
-
-function getFilterFromHash() {
-  const hash = window.location.hash.replace(/^#\/?/, '');
-  if (hash === '' || hash === 'all') return 'all';
-  if (hash === 'active') return 'active';
-  if (hash === 'completed') return 'completed';
-  return 'all';
-}
-
-function applyHashFilter() {
-  const filter = getFilterFromHash();
-  const state = store.getState();
-  if (state.filter !== filter) {
-    store.setState({ ...state, filter });
-  }
-}
-
-export function updateFilter(newFilter) {
-  if (VALID_FILTERS.includes(newFilter)) {
-    // Update state first
-    const state = store.getState();
-    if (state.filter !== newFilter) {
-      store.setState({ ...state, filter: newFilter });
-    }
-    
-    // Update hash without triggering hashchange event
-    const newHash = newFilter === 'all' ? '#/' : `#/${newFilter}`;
-    if (window.location.hash !== newHash) {
-      window.location.hash = newHash;
-    }
-  }
-}
-
-// Initialize state - start with empty todos like TodoMVC
-store.setState({
-  todos: [],
-  filter: getFilterFromHash(),
-  editingId: null,
-  editingValue: ''
-});
-
-function setupAllEvents() {
-  const { todos } = store.getState();
-  
-  // Clear existing event handlers to prevent duplicates
-  document.querySelectorAll('[data-todo-id]').forEach(el => {
-    if (el._eventId) {
-      delete el._eventId;
-    }
-  });
-  
-  setupHeaderEvents();
-  setupAppEvents();
-  setupFooterEvents();
-  setupTodoListEvents(todos);
-}
-
-function renderApp() {
-  render(App(), document.getElementById('app'));
-  // Setup events after a short delay to ensure DOM is ready
-  setTimeout(setupAllEvents, 10);
-}
-
-// Use framework's event system instead of addEventListener
-const handleHashChange = () => {
-  applyHashFilter();
+// Initialize state with proper filter detection
+const initialFilter = () => {
+  const hash = window.location.hash.replace('#/', '');
+  return ['all', 'active', 'completed'].includes(hash) ? hash : 'all';
 };
 
-// Set up hash change handling through the framework
-setTimeout(() => {
-  // Use the framework's event system for hash changes
-  window.onhashchange = handleHashChange;
-}, 0);
-
-// Subscribe to state changes
-store.subscribe(() => {
-  renderApp();
+store.setState({
+  todos: [],
+  filter: initialFilter()
 });
+
+// Single source of truth for filter state
+export const updateFilter = (newFilter) => {
+  store.setState({ ...store.getState(), filter: newFilter });
+  // Update the hash without triggering hashchange again
+  history.replaceState(null, '', newFilter === 'all' ? '#/' : `#/${newFilter}`);
+};
+
+// Use Event Manager for hash changes
+events.on(window, 'hashchange', () => {
+  const hash = window.location.hash.replace('#/', '');
+  const valid = ['all', 'active', 'completed'].includes(hash) ? hash : 'all';
+  if (store.getState().filter !== valid) {
+    store.setState({ ...store.getState(), filter: valid });
+  }
+});
+
+// Setup all event handlers with retry mechanism
+const setupAllEvents = () => {
+  const { todos } = store.getState();
+
+  try {
+    setupHeaderEvents();
+    setupAppEvents();
+    setupFooterEvents();
+    setupTodoListEvents(todos);
+    console.log('All events setup successfully');
+  } catch (error) {
+    console.error('Error setting up events:', error);
+    // Retry after a short delay
+    setTimeout(setupAllEvents, 50);
+  }
+};
+
+// Render function
+const renderApp = () => {
+  console.log("Starting render...");
+  render(App(), document.getElementById('app'));
+
+  // Setup events after rendering with multiple attempts
+  setTimeout(setupAllEvents, 10);
+  setTimeout(setupAllEvents, 100);
+  setTimeout(setupAllEvents, 500);
+};
 
 // Initial render
 renderApp();
 
-// Apply initial filter from hash
-applyHashFilter();
+// Subscribe to store changes
+store.subscribe(renderApp);

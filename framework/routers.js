@@ -6,24 +6,19 @@ export class Router {
     this.rootElement = rootElement;
     this.currentRoute = null;
 
-    // Listen for hash changes
-    events.on(window, 'hashchange', () => this.handleRouteChange());
+    events.on(window, 'popstate', () => this.handleRouteChange());
     events.on(window, 'load', () => this.handleRouteChange());
   }
 
-  getHash() {
-    let hash = window.location.hash.slice(2) || '/';
-    return hash === '/' ? 'all' : hash;
-  }
-
   navigateTo(path) {
-    window.location.hash = '/' + (path === 'all' ? '' : path);
+    window.history.pushState({}, '', path);
+    this.handleRouteChange();
   }
 
   handleRouteChange() {
-    const path = this.getHash();
-    const route = this.routes.find(r => r.path === path) || 
-                 this.routes.find(r => r.path === '*');
+    const path = window.location.pathname;
+    const route = this.routes.find(r => r.path === path) ||
+      this.routes.find(r => r.path === '*');
 
     if (route && route !== this.currentRoute) {
       this.currentRoute = route;
@@ -34,7 +29,7 @@ export class Router {
   link(path, text, attrs = {}) {
     return h('a', {
       ...attrs,
-      href: '#/' + (path === 'all' ? '' : path),
+      href: path,
       onclick: (e) => {
         e.preventDefault();
         this.navigateTo(path);

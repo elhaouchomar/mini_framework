@@ -2,15 +2,7 @@
 class EventManager {
   constructor() {
     this.handlers = new Map();
-    this.globalEventsSetup = false;
-    this.setupGlobalDelegation();
-  }
-
-  setupGlobalDelegation() {
-    if (this.globalEventsSetup) return;
-    
-    // We'll use the framework's own event system instead of addEventListener
-    this.globalEventsSetup = true;
+    this.rootListeners = new Set();
   }
 
   handleDelegatedEvent(event) {
@@ -34,10 +26,15 @@ class EventManager {
 
   // Register an event handler for a specific element
   on(element, eventType, handler) {
-    if (!element || !eventType || !handler) {
-      return;
+    if (!element || !eventType || !handler) return;
+    if (!this.rootListeners.has(eventType)) {
+      document.addEventListener(
+        eventType,
+        (e) => this.handleDelegatedEvent(e),
+        true
+      );
+      this.rootListeners.add(eventType);
     }
-
     if (!element._eventId) {
       element._eventId = this.generateEventId();
     }
@@ -52,7 +49,7 @@ class EventManager {
 
   // Remove event handler
   off(element, eventType) {
-    if (!element || !element._eventId) return;
+    if (!element._eventId) return;
 
     const elementHandlers = this.handlers.get(element._eventId);
     if (elementHandlers) {
@@ -68,16 +65,9 @@ class EventManager {
 
   // Clean up all handlers for an element
   cleanupElement(element) {
-    if (!element || !element._eventId) return;
-    
-    this.handlers.delete(element._eventId);
-    delete element._eventId;
-    
-    // Also clean up child elements
-    if (element.children) {
-      Array.from(element.children).forEach(child => {
-        this.cleanupElement(child);
-      });
+    if (element._eventId) {
+      this.handlers.delete(element._eventId);
+      delete element._eventId;
     }
   }
 
@@ -89,7 +79,9 @@ class EventManager {
   // Setup header events
   setupHeaderEvents(store) {
     const input = document.querySelector('.new-todo');
-    if (input && !input._eventId) {
+    if (input) {
+      console.log('Setting up header events for input:', input);
+
       const handleNewTodo = (e) => {
         if (e.key === 'Enter') {
           const value = e.target.value.trim();
@@ -110,49 +102,66 @@ class EventManager {
       };
 
       this.on(input, 'keydown', handleNewTodo);
+    } else {
+      console.log('Header input not found');
     }
   }
 
   // Setup app events
   setupAppEvents(store) {
+    console.log('Setting up app events...');
+
     const toggleAllInput = document.getElementById('toggle-all');
 
-    if (toggleAllInput && !toggleAllInput._eventId) {
-      this.on(toggleAllInput, 'change', (e) => {
+    if (toggleAllInput) {
+      this.on(toggleAllInput, 'click', () => {
         const { todos } = store.getState();
-        const shouldCompleteAll = e.target.checked;
+        const shouldCompleteAll = todos.some(t => !t.completed);
 
         store.setState({
           ...store.getState(),
           todos: todos.map(todo => ({ ...todo, completed: shouldCompleteAll }))
         });
       });
+      console.log('Toggle all event setup complete');
+    } else {
+      console.log('Toggle all input not found');
     }
   }
 
   // Setup footer events
   setupFooterEvents(store, updateFilter) {
-    // Filter links
-    const filterLinks = document.querySelectorAll('a[data-filter]');
-    
-    filterLinks.forEach(link => {
-      if (!link._eventId) {
-        const filter = link.getAttribute('data-filter');
-        
-        this.on(link, 'click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          updateFilter(filter);
-        });
-      }
-    });
+    console.log('Setting up footer events...');
 
-    // Clear completed button
+    // Filter links
+    const allLink = document.querySelector('a[data-filter="all"]');
+    const activeLink = document.querySelector('a[data-filter="active"]');
+    const completedLink = document.querySelector('a[data-filter="completed"]');
     const clearButton = document.querySelector('.clear-completed');
-    if (clearButton && !clearButton._eventId) {
-      this.on(clearButton, 'click', (e) => {
+
+    if (allLink) {
+      this.on(allLink, 'click', (e) => {
         e.preventDefault();
-        e.stopPropagation();
+        updateFilter('all');
+      });
+    }
+
+    if (activeLink) {
+      this.on(activeLink, 'click', (e) => {
+        e.preventDefault();
+        updateFilter('active');
+      });
+    }
+
+    if (completedLink) {
+      this.on(completedLink, 'click', (e) => {
+        e.preventDefault();
+        updateFilter('completed');
+      });
+    }
+
+    if (clearButton) {
+      this.on(clearButton, 'click', () => {
         const currentState = store.getState();
         store.setState({
           ...currentState,
@@ -160,26 +169,46 @@ class EventManager {
         });
       });
     }
+
+    console.log('Footer events setup complete');
   }
 
-  // Setup todo list events with proper delegation
+  // Setup todo list events
   setupTodoListEvents(todos, store) {
-    // Set up individual todo item events
+    console.log('Setting up todo list events for', todos.length, 'todos');
+
     todos.forEach(todo => {
       this.setupTodoItemEvents(todo, store);
     });
+
+    console.log('Todo list events setup complete');
   }
 
   // Setup individual todo item events
   setupTodoItemEvents(todo, store) {
     const todoElement = document.querySelector(`[data-todo-id="${todo.id}"]`);
-    if (!todoElement) return;
+    if (!todoElement) {
+      console.log('Todo element not found for ID:', todo.id);
+      return;
+    }
+
+    const viewDiv = todoElement.querySelector('.view');
+    const toggleInput = todoElement.querySelector('.toggle');
+    const label = todoElement.querySelector('label');
+    const destroyButton = todoElement.querySelector('.destroy');
+    const editInput = todoElement.querySelector('.edit');
+
+    // Double click to edit
+    if (viewDiv) {
+      this.on(viewDiv, 'dblclick', () => {
+        const current = store.getState();
+        store.setState({ ...current, editingId: todo.id, editingValue: todo.text });
+      });
+    }
 
     // Toggle checkbox
-    const toggleInput = todoElement.querySelector('.toggle');
-    if (toggleInput && !toggleInput._eventId) {
-      this.on(toggleInput, 'change', (e) => {
-        e.stopPropagation();
+    if (toggleInput) {
+      this.on(toggleInput, 'change', () => {
         const currentState = store.getState();
         store.setState({
           ...currentState,
@@ -190,27 +219,19 @@ class EventManager {
       });
     }
 
-    // Edit on double click
-    const label = todoElement.querySelector('label');
-    if (label && !label._eventId) {
-      this.on(label, 'dblclick', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+    // Click label to edit
+    if (label) {
+      this.on(label, 'click', () => {
+        this.editingState.editingId = todo.id;
+        this.editingState.editValue = todo.text;
         const currentState = store.getState();
-        store.setState({
-          ...currentState,
-          editingId: todo.id,
-          editingValue: todo.text
-        });
+        store.setState({ ...currentState });
       });
     }
 
     // Delete button
-    const destroyButton = todoElement.querySelector('.destroy');
-    if (destroyButton && !destroyButton._eventId) {
-      this.on(destroyButton, 'click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+    if (destroyButton) {
+      this.on(destroyButton, 'click', () => {
         const currentState = store.getState();
         store.setState({
           ...currentState,
@@ -220,16 +241,11 @@ class EventManager {
     }
 
     // Edit input events
-    const editInput = todoElement.querySelector('.edit');
-    if (editInput && !editInput._eventId) {
+    if (editInput) {
       this.on(editInput, 'input', (e) => {
-        const currentState = store.getState();
-        store.setState({
-          ...currentState,
-          editingValue: e.target.value
-        });
+        const current = store.getState();
+        store.setState({ ...current, editingValue: e.target.value });
       });
-
       this.on(editInput, 'keydown', (e) => {
         if (e.key === 'Enter') {
           this.handleSave(store);
@@ -239,49 +255,42 @@ class EventManager {
       });
 
       this.on(editInput, 'blur', () => {
-        this.handleSave(store);
+        this.handleSave(store);  
       });
     }
   }
 
+  // Handle save for todo editing
   handleSave(store) {
     const { editingId, editingValue, todos } = store.getState();
-    const trimmedValue = editingValue.trim();
+    const trimmed = editingValue.trim();
 
-    if (editingId && trimmedValue) {
+    if (editingId && trimmed) {
       store.setState({
         ...store.getState(),
-        todos: todos.map(t =>
-          t.id === editingId ? { ...t, text: trimmedValue } : t
-        ),
-        editingId: null,
-        editingValue: '',
+        todos: todos.map(t => (t.id === editingId ? { ...t, text: trimmed } : t)),
       });
-    } else if (editingId && !trimmedValue) {
-      // If empty, delete the todo (TodoMVC behavior)
+    } else if (editingId && !trimmed) {
+      // empty → delete (TodoMVC behaviour)
       store.setState({
         ...store.getState(),
         todos: todos.filter(t => t.id !== editingId),
-        editingId: null,
-        editingValue: '',
-      });
-    } else {
-      // Cancel editing
-      store.setState({
-        ...store.getState(),
-        editingId: null,
-        editingValue: '',
       });
     }
+
+    store.setState({ ...store.getState(), editingId: null, editingValue: '' });
   }
 
+  // Handle cancel for todo editing
   handleCancel(store) {
-    store.setState({
-      ...store.getState(),
-      editingId: null,
-      editingValue: '',
-    });
+    store.setState({ ...store.getState(), editingId: null, editingValue: '' });
   }
+
+  // Initialize editing state
+  editingState = {
+    editingId: null,
+    editValue: ''
+  };
 }
 
 // Create global instance
