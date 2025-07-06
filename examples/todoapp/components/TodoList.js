@@ -1,24 +1,10 @@
 import { h, events } from '../../../framework/core.js';
 import { store } from '../../../framework/state.js';
+import { TodoItem } from './TodoItem.js';
 
 /* ---------- UI ---------- */
 export const TodoList = (items) =>
-  h('ul', { class: 'todo-list' },
-    items.map(t => h('li', {
-      'data-todo-id': t.id,
-      class: [
-        t.completed ? 'completed' : '',
-        store.getState().editingId === t.id ? 'editing' : ''
-      ].join(' ').trim()
-    }, [
-      h('div', { class: 'view' }, [
-        h('input', { class: 'toggle', type: 'checkbox', checked: t.completed }),
-        h('label', {}, t.text),
-        h('button', { class: 'destroy' })
-      ]),
-      h('input', { class: 'edit', value: t.text })
-    ]))
-  );
+  h('ul', { class: 'todo-list' }, items.map(TodoItem));
 
 /* ---------- behaviour ---------- */
 export const setupTodoListEvents = (todos) => {
@@ -62,9 +48,11 @@ function setupTodoItemEvents(todo) {
 
   events.on(editInp, 'keydown', e => {
     if (e.key === 'Enter') saveEdit();
-    if (e.key === 'Escape') cancelEdit();
   });
-  events.on(editInp, 'blur', saveEdit);
+  editInp.addEventListener('blur', () => {
+    const { editingId } = store.getState();
+    if (editingId === todo.id) cancelEdit();
+  });
 
   function saveEdit() {
     const { editingValue, todos } = store.getState();

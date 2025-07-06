@@ -10,35 +10,29 @@ export const TodoItem = (todo) => {
   const { editingId, editingValue } = store.getState();
   const isEditing = editingId === todo.id;
 
-  /* ---------- normal view ------------- */
+  /* children are ALWAYS length 2, just toggled via style */
   const children = [
-    h('div', { class: 'view' }, [
-      h('input', {
-        class: 'toggle',
-        type: 'checkbox',
-        checked: todo.completed
-      }),
+    h('div', { class: 'view', key: 'view' }, [
+      h('input', { class: 'toggle', type: 'checkbox', checked: todo.completed }),
       h('label', {}, todo.text),
       h('button', { class: 'destroy' })
-    ])
-  ];
+    ]),
 
-  /* ---------- edit mode --------------- */
-  if (isEditing) {
-    children.push(
-      h('input', {
-        class: 'edit',
-        value: editingValue,
-        ref: (el) => {
+    h('input', {
+      class: 'edit',
+      key: 'edit',
+      value: isEditing ? editingValue : todo.text,
+      style: { display: isEditing ? '' : 'none' },
+      ref: isEditing
+        ? (el) => {
           if (el) {
             el.focus();
-            // put cursor at end
             el.setSelectionRange(el.value.length, el.value.length);
           }
         }
-      })
-    );
-  }
+        : null
+    })
+  ];
 
   return h('li', {
     class: `${todo.completed ? 'completed' : ''}${isEditing ? ' editing' : ''}`,
