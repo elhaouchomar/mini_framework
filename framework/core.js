@@ -12,10 +12,13 @@ export const h = (tag, attrs = {}, children = []) => ({ //- this a virtual DOM n
 let currentVNode = null;
 let rootElement = null;
 
-export const render = (vnode, container) => {
+export const render = (vnode, container) => { //- this function takes a virtual node and a container element to render it into
+  if (!container || !(container instanceof HTMLElement)) {
+    throw new Error('Invalid container element');
+  }
   if (!currentVNode) { //- If this is the first render, it creates a real DOM from the vnode using createDOM() and mounts it.
     // Initial render
-    const dom = createDOM(vnode); 
+    const dom = createDOM(vnode); //- converts the virtual node into a real DOM element
     container.innerHTML = '';
     container.appendChild(dom);
     rootElement = container;
@@ -28,14 +31,14 @@ export const render = (vnode, container) => {
 };
 
 const createDOM = (vnode) => {
-  if (typeof vnode === 'string' || typeof vnode === 'number') {
+  if (typeof vnode === 'string' || typeof vnode === 'number') { //- if the vnode is a string or number, it creates a text node
     return document.createTextNode(vnode);
   }
 
-  const el = document.createElement(vnode.tag);
+  const el = document.createElement(vnode.tag); //- creates a new DOM element based on the tag in the vnode
 
   // Set attributes and event handlers using the new event system
-  for (const [key, value] of Object.entries(vnode.attrs || {})) {
+  for (const [key, value] of Object.entries(vnode.attrs || {})) { //- iterates over the attributes in the vnode
     console.log("ATTR", key, value);
 
     if (key.startsWith('on') && typeof value === 'function') {
