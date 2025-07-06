@@ -1,10 +1,11 @@
 // Virtual DOM implementation with integrated event handling
 import { events } from './event.js';
 
-export const h = (tag, attrs = {}, children = []) => ({
-  tag,
-  attrs,
-  children: Array.isArray(children) ? children.filter(Boolean) : [children].filter(Boolean)
+
+export const h = (tag, attrs = {}, children = []) => ({ //- this a virtual DOM nodes factory function
+  tag, //- DOM element type (e.g., 'div', 'span')
+  attrs, //- attributes and event handlers (e.g., { class: 'my-class', onClick: () => {} })
+  children: Array.isArray(children) ? children.filter(Boolean) : [children].filter(Boolean)   //- children can be strings, numbers, or nested virtual nodes
 });
 
 // DOM renderer with diffing algorithm and event handling
@@ -12,9 +13,9 @@ let currentVNode = null;
 let rootElement = null;
 
 export const render = (vnode, container) => {
-  if (!currentVNode) {
+  if (!currentVNode) { //- If this is the first render, it creates a real DOM from the vnode using createDOM() and mounts it.
     // Initial render
-    const dom = createDOM(vnode);
+    const dom = createDOM(vnode); 
     container.innerHTML = '';
     container.appendChild(dom);
     rootElement = container;
@@ -38,7 +39,6 @@ const createDOM = (vnode) => {
     console.log("ATTR", key, value);
 
     if (key.startsWith('on') && typeof value === 'function') {
-      // Use our new event system instead of direct addEventListener
       const eventType = key.substring(2).toLowerCase();
       events.on(el, eventType, value);
     }
@@ -178,7 +178,7 @@ const diffChildren = (oldChildren = [], newChildren = []) => {
       patches[oldIdx] = { type: 'REMOVE' };
       oldIdx++;
     } else {
-      // newKey wasn’t in old list → insert/replace here
+      // newKey wasn't in old list → insert/replace here
       patches[oldIdx] = { type: 'REPLACE', node: newChild };
       oldIdx++;
       newIdx++;

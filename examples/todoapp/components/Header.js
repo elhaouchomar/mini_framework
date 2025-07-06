@@ -5,7 +5,7 @@ import { store } from '../../../framework/state.js';
 export const Header = () =>
   h('header', {}, [
     h('h1', {}, 'todos'),
-    h('input', { class: 'new-todo', placeholder: 'What needs doing?', autofocus: true })
+    h('input', { name: 'to do input', class: 'new-todo', placeholder: 'What needs doing?', autofocus: true })
   ]);
 
 /* ------- behaviour ------- */
