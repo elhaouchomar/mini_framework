@@ -49,7 +49,7 @@ function setupTodoItemEvents(todo) {
   events.on(editInp, 'keydown', e => {
     if (e.key === 'Enter') saveEdit();
   });
-  editInp.addEventListener('blur', () => {
+  events.on(editInp,'blur', () => {
     const { editingId } = store.getState();
     if (editingId === todo.id) cancelEdit();
   });

@@ -18,7 +18,7 @@ export const Footer = (activeCnt, hasCompleted, filter) =>
       ]))
     ),
 
-    hasCompleted &&
+    
     h('button', { class: 'clear-completed' }, 'Clear completed')
   ]);
 
