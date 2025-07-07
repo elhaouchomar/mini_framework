@@ -383,6 +383,17 @@ store.subscribe(() => {
 render(TodoApp(), document.getElementById('app'));
 ```
 
+### Step 4: After Rendering:
+
+const setupTodoListEvents = (todos) => {
+    todos.forEach(todo => {
+        const element = document.querySelector(`[data-todo-id="${todo.id}"]`);
+        if (element) {
+            events.on(element, 'click', () => handleTodoClick(todo.id));
+        }
+    });
+};
+
 ## 🛣️ Adding Routing
 
 ### Step 1: Import Router
@@ -565,6 +576,16 @@ const setupEvents = () => {
         setTimeout(setupEvents, 10);
     }
 };
+```
+
+### 1. List items re-render or reorder incorrectly
+
+**Problem**: List items are re-rendered or reordered unexpectedly
+**Solution**: Always provide a unique `key` prop for each list item in the VDOM
+
+```javascript
+// ✅ Good
+h('li', { key: todo.id }, todo.text);
 ```
 
 ## 📚 Resources

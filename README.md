@@ -64,10 +64,10 @@ cd mini_framework
 ## 🧠 Core Concepts
 
 ### Virtual DOM
-The framework uses a Virtual DOM for efficient updates. Instead of directly manipulating the DOM, you create virtual representations of your UI.
+The framework uses a Virtual DOM for efficient updates. Instead of directly manipulating the DOM, you create virtual representations of your UI. **For lists, always provide a unique `key` prop for each item to ensure correct reordering and minimal re-renders.**
 
 ### Event Delegation
-All events are handled through a centralized event delegation system, similar to React's synthetic events.
+All events are handled through a centralized event delegation system, similar to React's synthetic events. **For complex components (like dynamic lists), set up event handlers in dedicated setup functions after rendering, not via `on*` props in the VDOM.**
 
 ### State Management
 A simple but powerful state management system with subscriptions for reactive updates.
@@ -368,13 +368,7 @@ const TodoApp = () => {
         h('h1', {}, 'Todo App'),
         h('input', {
             class: 'new-todo',
-            placeholder: 'What needs to be done?',
-            onKeyDown: (e) => {
-                if (e.key === 'Enter') {
-                    addTodo(e.target.value);
-                    e.target.value = '';
-                }
-            }
+            placeholder: 'What needs to be done?'
         }),
         h('ul', { class: 'todo-list' }, 
             visibleTodos.map(todo => TodoItem(todo))
@@ -397,6 +391,11 @@ const TodoItem = (todo) => {
             onClick: () => deleteTodo(todo.id)
         }, 'Delete')
     ]);
+};
+
+// After rendering:
+const setupTodoEvents = () => {
+    // Use the event manager to set up all events for todo items
 };
 ```
 
@@ -562,6 +561,9 @@ const ErrorBoundary = (children) => {
    - Use keys for list items
    - Avoid unnecessary re-renders
    - Clean up event handlers
+
+5. **List items re-render or reorder incorrectly**
+   - **Solution:** Always provide a unique `key` prop for each list item in the VDOM.
 
 ---
 

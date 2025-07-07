@@ -336,5 +336,4 @@ export class Component {
   }
 }
 
-// Export events for direct access if needed
 export { events };

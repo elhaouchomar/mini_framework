@@ -109,9 +109,7 @@ const Header = (props) => {
 ```javascript
 const TodoList = (todos) => {
     return h('ul', {}, 
-        todos.map(todo => 
-            h('li', { key: todo.id }, todo.text)
-        )
+        todos.map(todo => h('li', { key: todo.id }, todo.text))
     );
 };
 ```
@@ -192,23 +190,15 @@ const Component = (props) => {
 
 ### Event Delegation Setup
 ```javascript
-// Component
-const TodoItem = (todo) => {
-    return h('li', {
-        'data-todo-id': todo.id,
-        key: todo.id
-    }, [
-        h('span', {}, todo.text),
-        h('button', { class: 'delete' }, 'Delete')
-    ]);
-};
-
-// Event setup
-const setupTodoEvents = (todo) => {
-    const element = document.querySelector(`[data-todo-id="${todo.id}"]`);
-    const deleteBtn = element.querySelector('.delete');
-    
-    events.on(deleteBtn, 'click', () => deleteTodo(todo.id));
+// After rendering, set up events for dynamic lists
+const setupTodoListEvents = (todos) => {
+    todos.forEach(todo => {
+        const element = document.querySelector(`[data-todo-id="${todo.id}"]`);
+        if (element) {
+            // Use the event manager to set up events
+            events.on(element, 'click', () => handleTodoClick(todo.id));
+        }
+    });
 };
 ```
 
@@ -262,6 +252,11 @@ store.setState({
 store.subscribe(() => {
     render(App(), document.getElementById('app'));
 });
+```
+
+### List items re-render or reorder incorrectly
+```javascript
+// ✅ Solution: Always provide a unique key prop for each list item
 ```
 
 ## 📚 Event Types

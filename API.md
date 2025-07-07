@@ -50,7 +50,7 @@ render(app, document.getElementById('app'));
 ```
 
 ### `events`
-Event Manager instance for handling events.
+Event Manager instance for handling events. **For complex/dynamic components, always set up events in dedicated setup functions after rendering.**
 
 #### `events.on(element, eventType, handler)`
 Registers an event handler for an element.
@@ -99,58 +99,47 @@ Cleans up all event handlers for an element.
 events.cleanupElement(button);
 ```
 
-#### `events.setupHeaderEvents(store)`
-Sets up event handlers for header component.
-
-**Parameters:**
-- `store` (object): State store instance
+#### `events.setupHeaderEvents()`
+Sets up event handlers for header component. **Call after rendering.**
 
 **Returns:** void
 
 **Example:**
 ```javascript
-events.setupHeaderEvents(store);
+events.setupHeaderEvents();
 ```
 
-#### `events.setupAppEvents(store)`
-Sets up event handlers for app component.
-
-**Parameters:**
-- `store` (object): State store instance
+#### `events.setupAppEvents()`
+Sets up event handlers for app component. **Call after rendering.**
 
 **Returns:** void
 
 **Example:**
 ```javascript
-events.setupAppEvents(store);
+events.setupAppEvents();
 ```
 
-#### `events.setupFooterEvents(store, updateFilter)`
-Sets up event handlers for footer component.
-
-**Parameters:**
-- `store` (object): State store instance
-- `updateFilter` (function): Filter update function
+#### `events.setupFooterEvents()`
+Sets up event handlers for footer component. **Call after rendering.**
 
 **Returns:** void
 
 **Example:**
 ```javascript
-events.setupFooterEvents(store, updateFilter);
+events.setupFooterEvents();
 ```
 
-#### `events.setupTodoListEvents(todos, store)`
-Sets up event handlers for todo list.
+#### `events.setupTodoListEvents(todos)`
+Sets up event handlers for todo list. **Call after rendering.**
 
 **Parameters:**
 - `todos` (array): Array of todo items
-- `store` (object): State store instance
 
 **Returns:** void
 
 **Example:**
 ```javascript
-events.setupTodoListEvents(todos, store);
+events.setupTodoListEvents(todos);
 ```
 
 ### `Component` Class
@@ -343,7 +332,8 @@ Generates a unique event ID.
 {
     tag: string,           // HTML tag name
     attrs: object,         // Element attributes and event handlers
-    children: array        // Child elements
+    children: array,       // Child elements
+    key: string            // (Recommended for lists) Unique key for diffing
 }
 ```
 
@@ -430,6 +420,12 @@ Generates a unique event ID.
    ```javascript
    // Error: Element not found for event setup
    // Solution: Ensure element exists before setting up events
+   ```
+
+4. **List items re-render or reorder incorrectly**
+   ```javascript
+   // Error: List items are re-rendered or reordered unexpectedly
+   // Solution: Always provide a unique key prop for each list item in the VDOM
    ```
 
 ## Performance Considerations
