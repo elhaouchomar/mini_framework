@@ -22,6 +22,13 @@ export class EventManager {
   on(el, type, fn) {
     if (!el || !type || !fn) return;
 
+    /* Direct-attach for non-reliable bubbling events */
+    if (['blur', 'focus', 'focusout', 'focusin'].includes(type)) {
+      const prev = el['on' + type];
+      el['on' + type] = e => { if (prev) prev.call(el, e); fn.call(el, e); };
+      return;                     // nothing else to delegate/store
+    }
+
     /* Attach ONE property-hook per bubbling eventType */
     if (el !== window && el !== document && !this.rootListeners.has(type)) {
       document['on' + type] = e => this.handleDelegatedEvent(e);
