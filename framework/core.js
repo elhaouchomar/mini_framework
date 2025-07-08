@@ -23,7 +23,7 @@ export const render = (vnode, container) => { //- this function takes a virtual 
     container.appendChild(dom);
     rootElement = container;
   } else {
-    // Update with diffing
+    //- currentVNode is full already so we update using diffing
     const patches = diff(currentVNode, vnode);
     applyPatches(rootElement.firstChild, patches);
   }
@@ -37,7 +37,7 @@ const createDOM = (vnode) => {
 
   const el = document.createElement(vnode.tag); //- creates a new DOM element based on the tag in the vnode
 
-  // Set attributes and event handlers using the new event system
+  // Set attributes and event handlers using event system
   for (const [key, value] of Object.entries(vnode.attrs || {})) { //- iterates over the attributes in the vnode
     console.log("ATTR", key, value);
 
@@ -49,14 +49,13 @@ const createDOM = (vnode) => {
       value(el); //- we pass the created DOM element back to user's code. 
     }
     else if (value !== undefined && value !== null) {
-      // Skip setting value/checked as attributes to prevent input locking
-      if (key !== 'value' && key !== 'checked' && key !== 'disabled') {
+      if (key !== 'value' && key !== 'checked' && key !== 'disabled') {  //- setAttribute() only affects the initial render and doesn't keep the live DOM state in sync, that's why we skip these.
         el.setAttribute(key, value);
       }
     }
   }
-
-  //- Set value, checked, and disabled attributes directly on the element
+ 
+  //- Set value, checked, and disabled attributes directly on the element (we use properties instead of attributes for these)
   if (vnode.attrs) {
     if ('value' in vnode.attrs) {
       el.value = vnode.attrs.value;
@@ -69,7 +68,7 @@ const createDOM = (vnode) => {
     }
   }
 
-  // Recursively Process children
+  //- Recursively Process children
   (vnode.children || []).forEach(child => {
     if (child) el.appendChild(createDOM(child));
   });
@@ -77,13 +76,14 @@ const createDOM = (vnode) => {
   return el;
 };
 
-const diff = (oldVNode, newVNode) => {
-  if (!oldVNode && !newVNode) return null;
-  if (!oldVNode) return { type: 'REPLACE', node: newVNode };
-  if (!newVNode) return { type: 'REMOVE' };
+//- return patch object in the form {type: 'UPDATE', attrs: { ... }, children: [ ... ] }
+const diff = (oldVNode, newVNode) => { //- oldVNode: the previous virtual node (already rendered) | newVNode: the new virtual node (the desired state)
+  if (!oldVNode && !newVNode) return null; //- if both are null, no changes needed
+  if (!oldVNode) return { type: 'REPLACE', node: newVNode };  //- if oldVNode is null, we need to replace it with the newVNode
+  if (!newVNode) return { type: 'REMOVE' }; //- if newVNode is null, we need to remove the oldVNode
 
   if (typeof oldVNode !== typeof newVNode) {
-    return { type: 'REPLACE', node: newVNode };
+    return { type: 'REPLACE', node: newVNode }; //- if types differ (e.g., oldVNode is a string, newVNode is an object), we need to replace the old with the new
   }
 
   if (typeof oldVNode === 'string' || typeof newVNode === 'string') {
@@ -197,9 +197,10 @@ const applyPatches = (domNode, patches) => {
       // Clean up old event handlers
       events.cleanupElement(domNode);
       break;
-
-    case 'REMOVE':
+      
+      case 'REMOVE':
       if (domNode.parentNode) {
+        
         // Clean up event handlers before removing
         events.cleanupElement(domNode);
         domNode.parentNode.removeChild(domNode);

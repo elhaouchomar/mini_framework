@@ -16,7 +16,7 @@ export const setupHeaderEvents = () => {
   events.on(input, 'keydown', e => {
     if (e.key !== 'Enter') return;
     const text = e.target.value.trim();
-    if (!text) return;
+    if (text.length < 2) return; 
 
     const { todos } = store.getState();
     store.setState({
