@@ -41,26 +41,22 @@ const createDOM = (vnode) => {
   for (const [key, value] of Object.entries(vnode.attrs || {})) { //- iterates over the attributes in the vnode
     console.log("ATTR", key, value);
 
-    if (key.startsWith('on') && typeof value === 'function') {
+    if (key.startsWith('on') && typeof value === 'function') { //- If the key starts with 'on' (like 'onClick'), it's treated as an event handler.
       const eventType = key.substring(2).toLowerCase();
       events.on(el, eventType, value);
     }
-    else if (key === 'ref' && typeof value === 'function') {
-      value(el); // Call the ref callback with the DOM element
-    }
-    else if (key === 'key') {
-      // Store key for diffing but don't set as attribute
-      el._key = value;
+    else if (key === 'ref' && typeof value === 'function') { //- we call the ref function, (el) => { inputEl = el; }, 
+      value(el); //- we pass the created DOM element back to user's code. 
     }
     else if (value !== undefined && value !== null) {
       // Skip setting value/checked as attributes to prevent input locking
-      if (key !== 'value' && key !== 'checked') {
+      if (key !== 'value' && key !== 'checked' && key !== 'disabled') {
         el.setAttribute(key, value);
       }
     }
   }
 
-  // Special handling for input values
+  //- Set value, checked, and disabled attributes directly on the element
   if (vnode.attrs) {
     if ('value' in vnode.attrs) {
       el.value = vnode.attrs.value;
@@ -73,7 +69,7 @@ const createDOM = (vnode) => {
     }
   }
 
-  // Process children
+  // Recursively Process children
   (vnode.children || []).forEach(child => {
     if (child) el.appendChild(createDOM(child));
   });
