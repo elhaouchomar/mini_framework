@@ -2,7 +2,7 @@
 import { events } from './event.js';
 
 
-export const h = (tag, attrs = {}, children = []) => ({ //- this a virtual DOM nodes factory function
+export const createVNode = (tag, attrs = {}, children = []) => ({ //- this a virtual DOM nodes factory function
   tag, //- DOM element type (e.g., 'div', 'span')
   attrs, //- attributes and event handlers (e.g., { class: 'my-class', onClick: () => {} })
   children: Array.isArray(children) ? children.filter(Boolean) : [children].filter(Boolean)   //- children can be strings, numbers, or nested virtual nodes

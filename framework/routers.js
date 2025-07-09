@@ -1,4 +1,4 @@
-import { h, render, events } from './core.js';
+import { createVNode, render, events } from './core.js';
 
 export class Router {
   constructor(routes, rootElement) {
@@ -27,7 +27,7 @@ export class Router {
   }
 
   link(path, text, attrs = {}) {
-    return h('a', {
+    return createVNode('a', {
       ...attrs,
       href: path,
       onclick: (e) => {

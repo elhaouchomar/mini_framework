@@ -1,4 +1,4 @@
-import { h } from '../../../framework/core.js';
+import { createVNode } from '../../../framework/core.js';
 import { store } from '../../../framework/state.js';
 
 /**
@@ -12,13 +12,13 @@ export const TodoItem = (todo) => {
 
   /* children are ALWAYS length 2, just toggled via style */
   const children = [
-    h('div', { class: 'view', key: 'view' }, [
-      h('input', { class: 'toggle', type: 'checkbox', checked: todo.completed }),
-      h('label', {}, todo.text),
-      h('button', { class: 'destroy' })
+    createVNode('div', { class: 'view', key: 'view' }, [
+      createVNode('input', { class: 'toggle', type: 'checkbox', checked: todo.completed }),
+      createVNode('label', {}, todo.text),
+      createVNode('button', { class: 'destroy' })
     ]),
 
-    h('input', {
+    createVNode('input', {
       class: 'edit',
       key: 'edit',
       value: isEditing ? editingValue : todo.text,
@@ -34,7 +34,7 @@ export const TodoItem = (todo) => {
     })
   ];
 
-  return h('li', {
+  return createVNode('li', {
     class: `${todo.completed ? 'completed' : ''}${isEditing ? ' editing' : ''}`,
     'data-todo-id': todo.id,
     key: todo.id                       // helps the diff algorithm

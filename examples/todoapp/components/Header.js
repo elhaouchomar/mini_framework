@@ -1,11 +1,11 @@
-import { h, events } from '../../../framework/core.js';
+import { createVNode, events } from '../../../framework/core.js';
 import { store } from '../../../framework/state.js';
 
 /* ------- UI ------- */
 export const Header = () =>
-  h('header', {}, [
-    h('h1', {}, 'todos'),
-    h('input', { name: 'to do input', class: 'new-todo', placeholder: 'What needs doing?', autofocus: true })
+  createVNode('header', {}, [
+    createVNode('h1', {}, 'todos'),
+    createVNode('input', { name: 'to do input', class: 'new-todo', placeholder: 'What needs doing?', autofocus: true })
   ]);
 
 /* ------- behaviour ------- */

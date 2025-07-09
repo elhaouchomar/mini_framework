@@ -1,10 +1,10 @@
-import { h, events } from '../../../framework/core.js';
+import { createVNode, events } from '../../../framework/core.js';
 import { store } from '../../../framework/state.js';
 import { TodoItem } from './TodoItem.js';
 
 /* ---------- UI ---------- */
 export const TodoList = (items) =>
-  h('ul', { class: 'todo-list' }, items.map(TodoItem));
+  createVNode('ul', { class: 'todo-list' }, items.map(TodoItem));
 
 /* ---------- behaviour ---------- */
 export const setupTodoListEvents = (todos) => {

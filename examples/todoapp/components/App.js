@@ -1,4 +1,4 @@
-import { h, events } from '../../../framework/core.js';
+import { createVNode, events } from '../../../framework/core.js';
 import { store } from '../../../framework/state.js';
 import { Header } from './Header.js';
 import { TodoList } from './TodoList.js';
@@ -16,16 +16,16 @@ export const App = () => {
   const activeCnt = todos.filter(t => !t.completed).length;
   const completedCnt = todos.length - activeCnt;
 
-  return h('div', { class: 'todoapp' }, [
+  return createVNode('div', { class: 'todoapp' }, [
     Header(),
-    todos.length && h('section', { class: 'main' }, [
-      visible.length && h('input', {
+    todos.length && createVNode('section', { class: 'main' }, [
+      visible.length && createVNode('input', {
         id: 'toggle-all',
         class: 'toggle-all',
         type: 'checkbox',
         checked: activeCnt === 0
       }),
-      visible.length && h('label', {
+      visible.length && createVNode('label', {
         for: 'toggle-all',
         class: 'toggle-all-label'
       }, 'Mark all as complete'),
