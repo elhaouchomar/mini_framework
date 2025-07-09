@@ -27,7 +27,7 @@ export const TodoItem = (todo) => {
         ? (el) => {
           if (el) {
             el.focus();
-            el.setSelectionRange(el.value.length, el.value.length);
+            // el.setSelectionRange(el.value.length, el.value.length);
           }
         }
         : null

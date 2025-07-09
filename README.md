@@ -39,14 +39,14 @@ cd mini_framework
     <div id="app"></div>
     
     <script type="module">
-        import { h, render } from './framework/core.js';
+        import { createVNode, render } from './framework/core.js';
         import { store } from './framework/store.js';
         
         // Create a simple component
         const App = () => {
-            return h('div', { class: 'app' }, [
-                h('h1', {}, 'Hello World!'),
-                h('button', {
+            return createVNode('div', { class: 'app' }, [
+                createVNode('h1', {}, 'Hello World!'),
+                createVNode('button', {
                     onClick: () => alert('Clicked!')
                 }, 'Click me')
             ]);
@@ -78,23 +78,23 @@ A simple but powerful state management system with subscriptions for reactive up
 
 ### Core Functions
 
-#### `h(tag, attrs, children)`
+#### `createVNode(tag, attrs, children)`
 Creates a virtual DOM element (similar to React's `createElement`).
 
 ```javascript
-import { h } from './framework/core.js';
+import { createVNode } from './framework/core.js';
 
 // Basic element
-h('div', { class: 'container' }, 'Hello World');
+createVNode('div', { class: 'container' }, 'Hello World');
 
 // Element with children
-h('div', { class: 'parent' }, [
-    h('h1', {}, 'Title'),
-    h('p', {}, 'Content')
+createVNode('div', { class: 'parent' }, [
+    createVNode('h1', {}, 'Title'),
+    createVNode('p', {}, 'Content')
 ]);
 
 // Element with event handlers
-h('button', {
+createVNode('button', {
     onClick: () => console.log('clicked'),
     onKeyDown: (e) => console.log('key pressed:', e.key)
 }, 'Click me');
@@ -106,7 +106,7 @@ Renders a virtual DOM tree into a real DOM container.
 ```javascript
 import { render } from './framework/core.js';
 
-const app = h('div', {}, 'Hello World');
+const app = createVNode('div', {}, 'Hello World');
 render(app, document.getElementById('app'));
 ```
 
@@ -179,16 +179,16 @@ Components are just functions that return virtual DOM elements.
 
 ```javascript
 const Header = (props) => {
-    return h('header', { class: 'header' }, [
-        h('h1', {}, props.title),
-        h('nav', {}, props.children)
+    return createVNode('header', { class: 'header' }, [
+        createVNode('h1', {}, props.title),
+        createVNode('nav', {}, props.children)
     ]);
 };
 
 // Usage
-const app = h('div', {}, [
+const app = createVNode('div', {}, [
     Header({ title: 'My App' }, [
-        h('a', { href: '/' }, 'Home')
+        createVNode('a', { href: '/' }, 'Home')
     ])
 ]);
 ```
@@ -198,9 +198,9 @@ const app = h('div', {}, [
 const Counter = () => {
     const [count, setCount] = useState(0);
     
-    return h('div', {}, [
-        h('h2', {}, `Count: ${count}`),
-        h('button', {
+    return createVNode('div', {}, [
+        createVNode('h2', {}, `Count: ${count}`),
+        createVNode('button', {
             onClick: () => setCount(count + 1)
         }, 'Increment')
     ]);
@@ -211,7 +211,7 @@ const Counter = () => {
 ```javascript
 const MyComponent = () => {
     // Component logic here
-    return h('div', {}, 'My Component');
+    return createVNode('div', {}, 'My Component');
 };
 
 // Setup events after component renders
@@ -256,10 +256,10 @@ const TodoItem = (todo) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editValue, setEditValue] = useState(todo.text);
     
-    return h('li', {
+    return createVNode('li', {
         class: isEditing ? 'editing' : ''
     }, [
-        h('input', {
+        createVNode('input', {
             value: editValue,
             onInput: (e) => setEditValue(e.target.value)
         })
@@ -276,7 +276,7 @@ The framework uses event delegation for better performance. Events are automatic
 
 ```javascript
 // Events are automatically registered when using on* props
-h('button', {
+createVNode('button', {
     onClick: (e) => console.log('clicked'),
     onKeyDown: (e) => console.log('key pressed:', e.key),
     onMouseOver: (e) => console.log('mouse over')
@@ -323,15 +323,15 @@ import { Router } from './framework/routers.js';
 const routes = [
     {
         path: '/',
-        component: () => h('div', {}, 'Home Page')
+        component: () => createVNode('div', {}, 'Home Page')
     },
     {
         path: '/about',
-        component: () => h('div', {}, 'About Page')
+        component: () => createVNode('div', {}, 'About Page')
     },
     {
         path: '*',
-        component: () => h('div', {}, '404 - Not Found')
+        component: () => createVNode('div', {}, '404 - Not Found')
     }
 ];
 
@@ -364,30 +364,30 @@ const TodoApp = () => {
         return true;
     });
     
-    return h('div', { class: 'todoapp' }, [
-        h('h1', {}, 'Todo App'),
-        h('input', {
+    return createVNode('div', { class: 'todoapp' }, [
+        createVNode('h1', {}, 'Todo App'),
+        createVNode('input', {
             class: 'new-todo',
             placeholder: 'What needs to be done?'
         }),
-        h('ul', { class: 'todo-list' }, 
+        createVNode('ul', { class: 'todo-list' }, 
             visibleTodos.map(todo => TodoItem(todo))
         )
     ]);
 };
 
 const TodoItem = (todo) => {
-    return h('li', {
+    return createVNode('li', {
         class: todo.completed ? 'completed' : '',
         key: todo.id
     }, [
-        h('input', {
+        createVNode('input', {
             type: 'checkbox',
             checked: todo.completed,
             onChange: () => toggleTodo(todo.id)
         }),
-        h('span', {}, todo.text),
-        h('button', {
+        createVNode('span', {}, todo.text),
+        createVNode('button', {
             onClick: () => deleteTodo(todo.id)
         }, 'Delete')
     ]);
@@ -420,27 +420,27 @@ const ContactForm = () => {
         });
     };
     
-    return h('form', {
+    return createVNode('form', {
         onSubmit: handleSubmit
     }, [
-        h('input', {
+        createVNode('input', {
             type: 'text',
             placeholder: 'Name',
             value: formData.name,
             onInput: handleInput('name')
         }),
-        h('input', {
+        createVNode('input', {
             type: 'email',
             placeholder: 'Email',
             value: formData.email,
             onInput: handleInput('email')
         }),
-        h('textarea', {
+        createVNode('textarea', {
             placeholder: 'Message',
             value: formData.message,
             onInput: handleInput('message')
         }),
-        h('button', { type: 'submit' }, 'Send')
+        createVNode('button', { type: 'submit' }, 'Send')
     ]);
 };
 ```
@@ -453,10 +453,10 @@ const ContactForm = () => {
 ```javascript
 // ✅ Good: Pure functional components
 const UserCard = (user) => {
-    return h('div', { class: 'user-card' }, [
-        h('img', { src: user.avatar }),
-        h('h3', {}, user.name),
-        h('p', {}, user.email)
+    return createVNode('div', { class: 'user-card' }, [
+        createVNode('img', { src: user.avatar }),
+        createVNode('h3', {}, user.name),
+        createVNode('p', {}, user.email)
     ]);
 };
 
@@ -489,8 +489,8 @@ const addTodo = (text) => {
 ```javascript
 // ✅ Good: Use keys for list items
 const TodoList = (todos) => {
-    return h('ul', {}, 
-        todos.map(todo => h('li', { key: todo.id }, todo.text))
+    return createVNode('ul', {}, 
+        todos.map(todo => createVNode('li', { key: todo.id }, todo.text))
     );
 };
 
@@ -503,12 +503,12 @@ const cleanup = () => {
 ### 4. Performance
 ```javascript
 // ✅ Good: Use keys for efficient diffing
-h('li', { key: todo.id }, todo.text);
+createVNode('li', { key: todo.id }, todo.text);
 
 // ✅ Good: Avoid unnecessary re-renders
 const expensiveComponent = () => {
     const memoizedValue = useMemo(() => expensiveCalculation(), [deps]);
-    return h('div', {}, memoizedValue);
+    return createVNode('div', {}, memoizedValue);
 };
 ```
 
@@ -534,7 +534,7 @@ const ErrorBoundary = (children) => {
     try {
         return children;
     } catch (error) {
-        return h('div', { class: 'error' }, 'Something went wrong');
+        return createVNode('div', { class: 'error' }, 'Something went wrong');
     }
 };
 ```

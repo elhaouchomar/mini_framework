@@ -13,6 +13,7 @@ let currentVNode = null;
 let rootElement = null;
 
 export const render = (vnode, container) => { //- this function takes a virtual node and a container element to render it into
+  console.log("RENDER-----", vnode, container);
   if (!container || !(container instanceof HTMLElement)) {
     throw new Error('Invalid container element');
   }
@@ -39,32 +40,32 @@ const createDOM = (vnode) => {
 
   // Set attributes and event handlers using event system
   for (const [key, value] of Object.entries(vnode.attrs || {})) { //- iterates over the attributes in the vnode
-    console.log("ATTR", key, value);
-
-    if (key.startsWith('on') && typeof value === 'function') { //- If the key starts with 'on' (like 'onClick'), it's treated as an event handler.
+    
+    //----------------> This is notworking <----------------
+    //=========> I don't find the case where this conditions work 
+   /*  if (key.startsWith('on') && typeof value === 'function') {
       const eventType = key.substring(2).toLowerCase();
       events.on(el, eventType, value);
     }
     else if (key === 'ref' && typeof value === 'function') { //- we call the ref function, (el) => { inputEl = el; }, 
+      console.log("key", key, "value", value);
       value(el); //- we pass the created DOM element back to user's code. 
-    }
-    else if (value !== undefined && value !== null) {
-      if (key !== 'value' && key !== 'checked' && key !== 'disabled') {  //- setAttribute() only affects the initial render and doesn't keep the live DOM state in sync, that's why we skip these.
+    } */
+    
+    if (value !== undefined && value !== null) {
+      if (key !== 'value' && key !== 'checked') {  //- setAttribute() only affects the initial render and doesn't keep the live DOM state in sync, that's why we skip these.
         el.setAttribute(key, value);
       }
     }
   }
- 
-  //- Set value, checked, and disabled attributes directly on the element (we use properties instead of attributes for these)
+
+  //- Set value and checked attributes directly on the element (we use properties instead of attributes for these)
   if (vnode.attrs) {
     if ('value' in vnode.attrs) {
       el.value = vnode.attrs.value;
     }
     if ('checked' in vnode.attrs) {
       el.checked = vnode.attrs.checked;
-    }
-    if ('disabled' in vnode.attrs) {
-      el.disabled = vnode.attrs.disabled;
     }
   }
 
@@ -117,7 +118,6 @@ const diffAttrs = (oldAttrs = {}, newAttrs = {}) => {
 
   // Check new/changed attributes
   for (const [key, value] of Object.entries(newAttrs)) {
-    console.log("ATTR-NEW", key, "new/changed", value);
 
     if (key !== 'key' && oldAttrs[key] !== value) {
       patches[key] = value;
@@ -127,7 +127,6 @@ const diffAttrs = (oldAttrs = {}, newAttrs = {}) => {
 
   // Check removed attributes
   for (const key in oldAttrs) {
-    console.log("ATTR-REMOVE", key);
     if (key !== 'key' && !(key in newAttrs)) {
       patches[key] = undefined;
       hasChanges = true;
@@ -197,10 +196,10 @@ const applyPatches = (domNode, patches) => {
       // Clean up old event handlers
       events.cleanupElement(domNode);
       break;
-      
-      case 'REMOVE':
+
+    case 'REMOVE':
       if (domNode.parentNode) {
-        
+
         // Clean up event handlers before removing
         events.cleanupElement(domNode);
         domNode.parentNode.removeChild(domNode);
@@ -218,6 +217,8 @@ const applyPatches = (domNode, patches) => {
         for (const [key, value] of Object.entries(patches.attrs)) {
           if (value === undefined) {
             if (key.startsWith('on')) {
+              console.log("key", key, "value", value);
+
               // Remove event handler using our event system
               const eventType = key.substring(2).toLowerCase();
               events.off(domNode, eventType);
@@ -233,9 +234,6 @@ const applyPatches = (domNode, patches) => {
           }
           else if (key === 'checked') {
             domNode.checked = value;
-          }
-          else if (key === 'disabled') {
-            domNode.disabled = value;
           }
           else if (key.startsWith('on') && typeof value === 'function') {
             // Update event handler using our event system
@@ -258,7 +256,6 @@ const applyPatches = (domNode, patches) => {
         // Apply patches to children
         patches.children.forEach((childPatch, i) => {
           if (childPatch === null) {
-            // No change needed
             return;
           }
 

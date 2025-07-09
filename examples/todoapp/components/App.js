@@ -8,13 +8,13 @@ import { Footer } from './Footer.js';
 export const App = () => {
   const { todos, filter } = store.getState();
 
-  const visible = todos.filter(t =>
-    filter === 'active' ? !t.completed :
-      filter === 'completed' ? t.completed :
+  const visible = todos.filter(todo =>
+    filter === 'active' ? !todo.completed :
+      filter === 'completed' ? todo.completed :
         true);
 
-  const activeCnt = todos.filter(t => !t.completed).length;
-  const completedCnt = todos.length - activeCnt;
+  const activeLen = todos.filter(todo => !todo.completed).length;
+  const completedLen = todos.length - activeLen;
 
   return createVNode('div', { class: 'todoapp' }, [
     Header(),
@@ -23,7 +23,7 @@ export const App = () => {
         id: 'toggle-all',
         class: 'toggle-all',
         type: 'checkbox',
-        checked: activeCnt === 0
+        checked: activeLen === 0
       }),
       visible.length && createVNode('label', {
         for: 'toggle-all',
@@ -31,7 +31,7 @@ export const App = () => {
       }, 'Mark all as complete'),
       TodoList(visible)
     ]),
-    todos.length && Footer(activeCnt, completedCnt > 0, filter)
+    todos.length && Footer(activeLen, completedLen > 0, filter)
   ]);
 };
 
@@ -41,11 +41,12 @@ export const setupAppEvents = () => {
   if (!toggle) return;
 
   events.on(toggle, 'click', () => {
+    
     const { todos } = store.getState();
-    const completeAll = todos.some(t => !t.completed);
+    const completeAll = todos.some(todo => !todo.completed);
     store.setState({
       ...store.getState(),
-      todos: todos.map(t => ({ ...t, completed: completeAll }))
+      todos: todos.map(todo => ({ ...todo, completed: completeAll }))
     });
-  });
+  });   
 };

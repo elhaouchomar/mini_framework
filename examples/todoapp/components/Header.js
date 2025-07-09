@@ -8,7 +8,6 @@ export const Header = () =>
     createVNode('input', { name: 'to do input', class: 'new-todo', placeholder: 'What needs doing?', autofocus: true })
   ]);
 
-/* ------- behaviour ------- */
 export const setupHeaderEvents = () => {
   const input = document.querySelector('.new-todo');
   if (!input) return;

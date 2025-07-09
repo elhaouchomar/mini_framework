@@ -2,7 +2,9 @@
 
 let state = {
   todos: [],
-  filter: 'all'
+  filter: 'all',
+  editingId: null,
+  editingValue: null
 };
 
 let subscribers = [];
@@ -10,7 +12,6 @@ let subscribers = [];
 export const store = {
   getState() {
     // return shallow copy
-    console.log("Get State", state);
     
     return { ...state };
   },
@@ -29,15 +30,18 @@ export const store = {
 
 
     // Notify all subscribers
-    console.log("subscribers", subscribers);
-
-    subscribers.forEach(subscriber => subscriber());
+    subscribers.forEach(subscriber => {
+      console.log("subscriber---11", subscriber);
+      subscriber()});
   },
-
+  
   subscribe(callback) {
+    // we have just mount function in the app.js
     subscribers.push(callback);
+    console.log("subscribers---", subscribers, "callback", callback);
     return () => {
-      subscribers = subscribers.filter(sub => sub !== callback);
-    };
+      // we gonna need it in the Bomberman game to unmount
+       subscribers = subscribers.filter(sub => sub !== callback);
+     };
   }
 };

@@ -13,16 +13,16 @@ import { Router } from './framework/routers.js';
 ### Creating Elements
 ```javascript
 // Basic element
-h('div', { class: 'container' }, 'Content');
+createVNode('div', { class: 'container' }, 'Content');
 
 // Element with children
-h('div', {}, [
-    h('h1', {}, 'Title'),
-    h('p', {}, 'Text')
+createVNode('div', {}, [
+    createVNode('h1', {}, 'Title'),
+    createVNode('p', {}, 'Text')
 ]);
 
 // Element with events
-h('button', {
+createVNode('button', {
     onClick: () => console.log('clicked'),
     onKeyDown: (e) => console.log(e.key)
 }, 'Click me');
@@ -73,7 +73,7 @@ state.todos.push(newTodo);
 
 ### Automatic Events (on* props)
 ```javascript
-h('button', {
+createVNode('button', {
     onClick: handleClick,
     onKeyDown: handleKeyDown,
     onMouseOver: handleMouseOver
@@ -98,9 +98,9 @@ events.cleanupElement(element);
 ### Functional Component
 ```javascript
 const Header = (props) => {
-    return h('header', { class: 'header' }, [
-        h('h1', {}, props.title),
-        h('nav', {}, props.children)
+    return createVNode('header', { class: 'header' }, [
+        createVNode('h1', {}, props.title),
+        createVNode('nav', {}, props.children)
     ]);
 };
 ```
@@ -108,8 +108,8 @@ const Header = (props) => {
 ### List Component with Keys
 ```javascript
 const TodoList = (todos) => {
-    return h('ul', {}, 
-        todos.map(todo => h('li', { key: todo.id }, todo.text))
+    return createVNode('ul', {}, 
+        todos.map(todo => createVNode('li', { key: todo.id }, todo.text))
     );
 };
 ```
@@ -119,9 +119,9 @@ const TodoList = (todos) => {
 const Counter = () => {
     const [count, setCount] = useState(0);
     
-    return h('div', {}, [
-        h('span', {}, `Count: ${count}`),
-        h('button', {
+    return createVNode('div', {}, [
+        createVNode('span', {}, `Count: ${count}`),
+        createVNode('button', {
             onClick: () => setCount(count + 1)
         }, 'Increment')
     ]);
@@ -166,12 +166,12 @@ const Form = () => {
         setData({ ...data, [field]: e.target.value });
     };
     
-    return h('form', { onSubmit: handleSubmit }, [
-        h('input', {
+    return createVNode('form', { onSubmit: handleSubmit }, [
+        createVNode('input', {
             value: data.name,
             onInput: handleInput('name')
         }),
-        h('button', { type: 'submit' }, 'Submit')
+        createVNode('button', { type: 'submit' }, 'Submit')
     ]);
 };
 ```
@@ -179,10 +179,10 @@ const Form = () => {
 ### Conditional Rendering
 ```javascript
 const Component = (props) => {
-    return h('div', {}, [
-        props.showHeader && h('h1', {}, 'Header'),
-        props.items.length > 0 && h('ul', {}, 
-            props.items.map(item => h('li', { key: item.id }, item.text))
+    return createVNode('div', {}, [
+        props.showHeader && createVNode('h1', {}, 'Header'),
+        props.items.length > 0 && createVNode('ul', {}, 
+            props.items.map(item => createVNode('li', { key: item.id }, item.text))
         )
     ]);
 };
@@ -207,10 +207,10 @@ const setupTodoListEvents = (todos) => {
 ### Use Keys for Lists
 ```javascript
 // ✅ Good
-todos.map(todo => h('li', { key: todo.id }, todo.text));
+todos.map(todo => createVNode('li', { key: todo.id }, todo.text));
 
 // ❌ Bad
-todos.map((todo, index) => h('li', { key: index }, todo.text));
+todos.map((todo, index) => createVNode('li', { key: index }, todo.text));
 ```
 
 ### Avoid Unnecessary Re-renders
@@ -219,7 +219,7 @@ todos.map((todo, index) => h('li', { key: index }, todo.text));
 const expensiveValue = useMemo(() => heavyCalculation(data), [data]);
 
 // ✅ Good: Use keys for efficient diffing
-h('div', { key: uniqueId }, content);
+createVNode('div', { key: uniqueId }, content);
 ```
 
 ### Clean Up Events
@@ -280,7 +280,7 @@ store.subscribe(() => {
 
 ### Common Attributes
 ```javascript
-h('div', {
+createVNode('div', {
     class: 'container',
     id: 'main',
     style: 'color: red;',
@@ -290,7 +290,7 @@ h('div', {
 
 ### Boolean Attributes
 ```javascript
-h('input', {
+createVNode('input', {
     type: 'checkbox',
     checked: true,
     disabled: false,

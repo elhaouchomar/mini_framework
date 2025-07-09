@@ -86,7 +86,7 @@ Create a new file called `index.html`:
 Add the imports to your script tag:
 
 ```javascript
-import { h, render } from './framework/core.js';
+import { createVNode, render } from './framework/core.js';
 import { store } from './framework/store.js';
 ```
 
@@ -99,10 +99,10 @@ const Counter = () => {
     const state = store.getState();
     const count = state.count || 0;
     
-    return h('div', { class: 'counter' }, [
-        h('h1', {}, 'My First Mini Framework App'),
-        h('div', {}, [
-            h('button', {
+    return createVNode('div', { class: 'counter' }, [
+        createVNode('h1', {}, 'My First Mini Framework App'),
+        createVNode('div', {}, [
+            createVNode('button', {
                 onClick: () => {
                     store.setState({
                         ...store.getState(),
@@ -110,8 +110,8 @@ const Counter = () => {
                     });
                 }
             }, 'Decrease'),
-            h('span', {}, `Count: ${count}`),
-            h('button', {
+            createVNode('span', {}, `Count: ${count}`),
+            createVNode('button', {
                 onClick: () => {
                     store.setState({
                         ...store.getState(),
@@ -128,7 +128,7 @@ const Counter = () => {
 
 ```javascript
 const App = () => {
-    return h('div', { class: 'container' }, [
+    return createVNode('div', { class: 'container' }, [
         Counter()
     ]);
 };
@@ -189,17 +189,17 @@ Your complete `index.html` should look like this:
     <div id="app"></div>
     
     <script type="module">
-        import { h, render } from './framework/core.js';
+        import { createVNode, render } from './framework/core.js';
         import { store } from './framework/store.js';
         
         const Counter = () => {
             const state = store.getState();
             const count = state.count || 0;
             
-            return h('div', { class: 'counter' }, [
-                h('h1', {}, 'My First Mini Framework App'),
-                h('div', {}, [
-                    h('button', {
+            return createVNode('div', { class: 'counter' }, [
+                createVNode('h1', {}, 'My First Mini Framework App'),
+                createVNode('div', {}, [
+                    createVNode('button', {
                         onClick: () => {
                             store.setState({
                                 ...store.getState(),
@@ -207,8 +207,8 @@ Your complete `index.html` should look like this:
                             });
                         }
                     }, 'Decrease'),
-                    h('span', {}, `Count: ${count}`),
-                    h('button', {
+                    createVNode('span', {}, `Count: ${count}`),
+                    createVNode('button', {
                         onClick: () => {
                             store.setState({
                                 ...store.getState(),
@@ -221,7 +221,7 @@ Your complete `index.html` should look like this:
         };
         
         const App = () => {
-            return h('div', { class: 'container' }, [
+            return createVNode('div', { class: 'container' }, [
                 Counter()
             ]);
         };
@@ -268,17 +268,17 @@ Now let's build something more complex - a todo application.
 ```javascript
 // TodoItem component
 const TodoItem = (todo) => {
-    return h('li', {
+    return createVNode('li', {
         class: todo.completed ? 'completed' : '',
         key: todo.id
     }, [
-        h('input', {
+        createVNode('input', {
             type: 'checkbox',
             checked: todo.completed,
             onChange: () => toggleTodo(todo.id)
         }),
-        h('span', {}, todo.text),
-        h('button', {
+        createVNode('span', {}, todo.text),
+        createVNode('button', {
             onClick: () => deleteTodo(todo.id)
         }, 'Delete')
     ]);
@@ -289,14 +289,14 @@ const TodoList = () => {
     const state = store.getState();
     const todos = state.todos || [];
     
-    return h('ul', { class: 'todo-list' }, 
+    return createVNode('ul', { class: 'todo-list' }, 
         todos.map(todo => TodoItem(todo))
     );
 };
 
 // TodoForm component
 const TodoForm = () => {
-    return h('form', {
+    return createVNode('form', {
         onSubmit: (e) => {
             e.preventDefault();
             const input = e.target.querySelector('input');
@@ -308,12 +308,12 @@ const TodoForm = () => {
             }
         }
     }, [
-        h('input', {
+        createVNode('input', {
             type: 'text',
             placeholder: 'What needs to be done?',
             required: true
         }),
-        h('button', { type: 'submit' }, 'Add Todo')
+        createVNode('button', { type: 'submit' }, 'Add Todo')
     ]);
 };
 ```
@@ -363,8 +363,8 @@ const deleteTodo = (id) => {
 
 ```javascript
 const TodoApp = () => {
-    return h('div', { class: 'todoapp' }, [
-        h('h1', {}, 'Todo App'),
+    return createVNode('div', { class: 'todoapp' }, [
+        createVNode('h1', {}, 'Todo App'),
         TodoForm(),
         TodoList()
     ]);
@@ -406,23 +406,23 @@ import { Router } from './framework/routers.js';
 
 ```javascript
 const Home = () => {
-    return h('div', {}, [
-        h('h1', {}, 'Home Page'),
-        h('p', {}, 'Welcome to our application!')
+    return createVNode('div', {}, [
+        createVNode('h1', {}, 'Home Page'),
+        createVNode('p', {}, 'Welcome to our application!')
     ]);
 };
 
 const About = () => {
-    return h('div', {}, [
-        h('h1', {}, 'About Page'),
-        h('p', {}, 'This is a simple application built with Mini Framework.')
+    return createVNode('div', {}, [
+        createVNode('h1', {}, 'About Page'),
+        createVNode('p', {}, 'This is a simple application built with Mini Framework.')
     ]);
 };
 
 const NotFound = () => {
-    return h('div', {}, [
-        h('h1', {}, '404 - Page Not Found'),
-        h('p', {}, 'The page you are looking for does not exist.')
+    return createVNode('div', {}, [
+        createVNode('h1', {}, '404 - Page Not Found'),
+        createVNode('p', {}, 'The page you are looking for does not exist.')
     ]);
 };
 ```
@@ -443,16 +443,16 @@ const router = new Router(routes, document.getElementById('app'));
 
 ```javascript
 const Navigation = () => {
-    return h('nav', {}, [
+    return createVNode('nav', {}, [
         router.link('/', 'Home', { class: 'nav-link' }),
         router.link('/about', 'About', { class: 'nav-link' })
     ]);
 };
 
 const App = () => {
-    return h('div', { class: 'app' }, [
+    return createVNode('div', { class: 'app' }, [
         Navigation(),
-        h('main', {}, [
+        createVNode('main', {}, [
             // Router will render the current page here
         ])
     ]);
@@ -488,7 +488,7 @@ Use `console.log()` to debug your application:
 ```javascript
 const TodoItem = (todo) => {
     console.log('Rendering todo:', todo);
-    return h('li', {}, todo.text);
+    return createVNode('li', {}, todo.text);
 };
 ```
 
@@ -540,10 +540,10 @@ store.setState({
 
 ```javascript
 // ✅ Good
-h('button', { onClick: handleClick }, 'Click me');
+createVNode('button', { onClick: handleClick }, 'Click me');
 
 // ❌ Bad
-h('button', { onclick: handleClick }, 'Click me');
+createVNode('button', { onclick: handleClick }, 'Click me');
 ```
 
 ### 2. State Not Updating
@@ -585,7 +585,7 @@ const setupEvents = () => {
 
 ```javascript
 // ✅ Good
-h('li', { key: todo.id }, todo.text);
+createVNode('li', { key: todo.id }, todo.text);
 ```
 
 ## 📚 Resources

@@ -2,7 +2,7 @@
 
 ## Core Module (`framework/core.js`)
 
-### `h(tag, attrs, children)`
+### `createVNode(tag, attrs, children)`
 Creates a virtual DOM element.
 
 **Parameters:**
@@ -14,19 +14,19 @@ Creates a virtual DOM element.
 
 **Example:**
 ```javascript
-import { h } from './framework/core.js';
+import { createVNode } from './framework/core.js';
 
 // Basic element
-h('div', { class: 'container' }, 'Hello World');
+createVNode('div', { class: 'container' }, 'Hello World');
 
 // Element with children
-h('div', {}, [
-    h('h1', {}, 'Title'),
-    h('p', {}, 'Content')
+createVNode('div', {}, [
+    createVNode('h1', {}, 'Title'),
+    createVNode('p', {}, 'Content')
 ]);
 
 // Element with events
-h('button', {
+createVNode('button', {
     onClick: () => console.log('clicked'),
     onKeyDown: (e) => console.log(e.key)
 }, 'Click me');
@@ -45,7 +45,7 @@ Renders a virtual DOM tree into a real DOM container.
 ```javascript
 import { render } from './framework/core.js';
 
-const app = h('div', {}, 'Hello World');
+const app = createVNode('div', {}, 'Hello World');
 render(app, document.getElementById('app'));
 ```
 
@@ -161,7 +161,7 @@ class MyComponent extends Component {
     }
     
     render() {
-        return h('div', {}, 'My Component');
+        return createVNode('div', {}, 'My Component');
     }
 }
 ```
@@ -413,7 +413,7 @@ Generates a unique event ID.
 2. **Invalid virtual DOM node**
    ```javascript
    // Error: Invalid VNode
-   // Solution: Use h() function to create valid VNodes
+   // Solution: Use createVNode() function to create valid VNodes
    ```
 
 3. **Event handler not found**
@@ -435,10 +435,10 @@ Generates a unique event ID.
 1. **Use keys for list items**
    ```javascript
    // Good
-   todos.map(todo => h('li', { key: todo.id }, todo.text));
+   todos.map(todo => createVNode('li', { key: todo.id }, todo.text));
    
    // Bad
-   todos.map((todo, index) => h('li', { key: index }, todo.text));
+   todos.map((todo, index) => createVNode('li', { key: index }, todo.text));
    ```
 
 2. **Clean up event handlers**
