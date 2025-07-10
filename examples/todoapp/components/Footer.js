@@ -3,10 +3,10 @@ import { store } from '../../../framework/state.js';
 import { updateFilter } from '../app.js';   // from entry module
 
 /* ---------- UI ---------- */
-export const Footer = (activeCnt, hasCompleted, filter) =>
+export const Footer = (activeCnt, filter) =>
   createVNode('footer', { class: 'footer' }, [
     createVNode('span', { class: 'todo-count' },
-      `${activeCnt} item${activeCnt !== 1 ? 's' : ''} left`),
+      `${activeCnt} item${activeCnt > 1 ? 's' : ''} left`),
 
     createVNode('ul', { class: 'filters' }, [
       ['all', 'All'],

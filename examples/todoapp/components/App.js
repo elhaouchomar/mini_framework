@@ -31,7 +31,7 @@ export const App = () => {
       }, 'Mark all as complete'),
       TodoList(visible)
     ]),
-    todos.length && Footer(activeLen, completedLen > 0, filter)
+    todos.length && Footer(activeLen, filter)
   ]);
 };
 
