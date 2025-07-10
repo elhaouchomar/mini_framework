@@ -38,32 +38,16 @@ const createDOM = (vnode) => {
   const el = document.createElement(vnode.tag); //- creates a new DOM element based on the tag in the vnode
 
   // Set attributes and event handlers using event system
-  for (const [key, value] of Object.entries(vnode.attrs || {})) { //- iterates over the attributes in the vnode
-    
-    //----------------> This is notworking <----------------
-    //=========> I don't find the case where this conditions work 
-   /*  if (key.startsWith('on') && typeof value === 'function') {
+  for (const [key, value] of Object.entries(vnode.attrs || {})) {
+    if (key.startsWith('on') && typeof value === 'function') {
       const eventType = key.substring(2).toLowerCase();
-      events.on(el, eventType, value);
-    }
-    else if (key === 'ref' && typeof value === 'function') { //- we call the ref function, (el) => { inputEl = el; }, 
-      value(el); //- we pass the created DOM element back to user's code. 
-    } */
-    
-    if (value !== undefined && value !== null) {
-      if (key !== 'value' && key !== 'checked') {  //- setAttribute() only affects the initial render and doesn't keep the live DOM state in sync, that's why we skip these.
-        el.setAttribute(key, value);
-      }
-    }
-  }
-
-  //- Set value and checked attributes directly on the element (we use properties instead of attributes for these)
-  if (vnode.attrs) {
-    if ('value' in vnode.attrs) {
-      el.value = vnode.attrs.value;
-    }
-    if ('checked' in vnode.attrs) {
-      el.checked = vnode.attrs.checked;
+      events.on(el, eventType, value); //- register event handler using our event system
+    } else if (key === 'ref' && typeof value === 'function') {
+      value(el); //- call ref value function, so we can get a reference to the DOM element
+    } else if (key === 'value' || key === 'checked' || key === 'disabled') {
+      el.value = value;
+    } else if (value !== undefined && value !== null) {
+      el.setAttribute(key, value);
     }
   }
 
@@ -77,8 +61,6 @@ const createDOM = (vnode) => {
 
 //- return patch object in the form {type: 'UPDATE', attrs: { ... }, children: [ ... ] }
 const diff = (oldVNode, newVNode) => { //- oldVNode: the previous virtual node (already rendered) | newVNode: the new virtual node (the desired state)
-  if (!oldVNode && !newVNode) return null; //- if both are null, no changes needed
-  if (!oldVNode) return { type: 'REPLACE', node: newVNode };  //- if oldVNode is null, we need to replace it with the newVNode
   if (!newVNode) return { type: 'REMOVE' }; //- if newVNode is null, we need to remove the oldVNode
 
   if (typeof oldVNode !== typeof newVNode) {
@@ -99,7 +81,7 @@ const diff = (oldVNode, newVNode) => { //- oldVNode: the previous virtual node (
   const oldKey = oldVNode.attrs?.key;
   const newKey = newVNode.attrs?.key;
   if (oldKey !== newKey && (oldKey !== undefined || newKey !== undefined)) {
-    return { type: 'REPLACE', node: newVNode };
+    return { type: 'REPLACE', node: newVNode }; //- if key attributes differ, we replace the entire node
   }
 
   const attrPatches = diffAttrs(oldVNode.attrs, newVNode.attrs);
@@ -110,23 +92,22 @@ const diff = (oldVNode, newVNode) => { //- oldVNode: the previous virtual node (
     : null;
 };
 
+// compares the attributes of two virtual nodes and returns an object with changes
 const diffAttrs = (oldAttrs = {}, newAttrs = {}) => {
-  const patches = {};
+  const patches = {}; //- will store the attributes that changed
   let hasChanges = false;
 
   // Check new/changed attributes
-  for (const [key, value] of Object.entries(newAttrs)) {
-
-    if (key !== 'key' && oldAttrs[key] !== value) {
-      patches[key] = value;
+  for (const [key, value] of Object.entries(newAttrs)) { //- iterates over the newAttrs object
+    if (key !== 'key' && oldAttrs[key] !== value) { //- key !== 'key' ensures we skip the special virtual-DOM key used for diffing (not for real DOM)
+      patches[key] = value; //- if the value is different from the oldAttrs, we add it to the patches object
       hasChanges = true;
     }
   }
 
-  // Check removed attributes
-  for (const key in oldAttrs) {
+  for (const key in oldAttrs) { //- here we iterate over the oldAttrs object
     if (key !== 'key' && !(key in newAttrs)) {
-      patches[key] = undefined;
+      patches[key] = undefined; //- if the key is not present in newAttrs, we mark it for removal by setting its value to undefined
       hasChanges = true;
     }
   }
@@ -134,26 +115,26 @@ const diffAttrs = (oldAttrs = {}, newAttrs = {}) => {
   return hasChanges ? patches : null;
 };
 
+// compares two arrays of virtual nodes (children) and returns an array of patches
 const diffChildren = (oldChildren = [], newChildren = []) => {
-  const patches = [];
+  const patches = []; //- this will store the patches for each child node, patches[i] corresponds to the i-th child in oldChildren
   let oldIdx = 0;
   let newIdx = 0;
 
   while (oldIdx < oldChildren.length || newIdx < newChildren.length) {
-    const oldChild = oldChildren[oldIdx];
-    const newChild = newChildren[newIdx];
+    const oldChild = oldChildren[oldIdx]; //- oldChild is the current child node in the oldChildren array
+    const newChild = newChildren[newIdx]; //- newChild is the current child node in the newChildren array
 
-    // no more new nodes → remove the rest
-    if (!newChild) {
+    if (!newChild) { //- for sure we have oldChild=true from to the loop condition
       patches[oldIdx] = { type: 'REMOVE' };
-      oldIdx++;
+      oldIdx++; 
       continue;
     }
 
     // no old node here → insert / replace
     if (!oldChild) {
       patches[oldIdx] = { type: 'REPLACE', node: newChild };
-      oldIdx++;
+      oldIdx++; 
       newIdx++;
       continue;
     }
@@ -293,38 +274,5 @@ const applyPatches = (domNode, patches) => {
       break;
   }
 };
-
-export class Component {
-  constructor(props = {}) {
-    this.props = props;
-    this.state = {};
-    this._vnode = null;
-    this._dom = null;
-  }
-
-  setState(updater) {
-    if (typeof updater === 'function') {
-      this.state = { ...this.state, ...updater(this.state) };
-    } else {
-      this.state = { ...this.state, ...updater };
-    }
-    this._render();
-  }
-
-  _render() {
-    const vnode = this.render();
-    if (this._dom) {
-      const patches = diff(this._vnode, vnode);
-      applyPatches(this._dom, patches);
-    } else {
-      this._dom = createDOM(vnode);
-    }
-    this._vnode = vnode;
-  }
-
-  render() {
-    throw new Error('Component must implement render()');
-  }
-}
 
 export { events };
