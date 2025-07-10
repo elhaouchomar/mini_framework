@@ -13,7 +13,6 @@ let currentVNode = null;
 let rootElement = null;
 
 export const render = (vnode, container) => { //- this function takes a virtual node and a container element to render it into
-  console.log("RENDER-----", vnode, container);
   if (!container || !(container instanceof HTMLElement)) {
     throw new Error('Invalid container element');
   }
@@ -48,7 +47,6 @@ const createDOM = (vnode) => {
       events.on(el, eventType, value);
     }
     else if (key === 'ref' && typeof value === 'function') { //- we call the ref function, (el) => { inputEl = el; }, 
-      console.log("key", key, "value", value);
       value(el); //- we pass the created DOM element back to user's code. 
     } */
     
@@ -217,7 +215,6 @@ const applyPatches = (domNode, patches) => {
         for (const [key, value] of Object.entries(patches.attrs)) {
           if (value === undefined) {
             if (key.startsWith('on')) {
-              console.log("key", key, "value", value);
 
               // Remove event handler using our event system
               const eventType = key.substring(2).toLowerCase();

@@ -19,9 +19,6 @@ export const store = {
   setState(newState) {
     // Create a new state object to ensure change detection
    
-    console.log("STATE", state);
-    console.log("NEW STATE", newState);
-    
     state = {
       // ...state,
       ...newState,
@@ -31,14 +28,12 @@ export const store = {
 
     // Notify all subscribers
     subscribers.forEach(subscriber => {
-      console.log("subscriber---11", subscriber);
       subscriber()});
   },
   
   subscribe(callback) {
     // we have just mount function in the app.js
     subscribers.push(callback);
-    console.log("subscribers---", subscribers, "callback", callback);
     return () => {
       // we gonna need it in the Bomberman game to unmount
        subscribers = subscribers.filter(sub => sub !== callback);
