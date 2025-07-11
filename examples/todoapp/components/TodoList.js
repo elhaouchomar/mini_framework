@@ -1,80 +1,102 @@
 import { createVNode, events } from '../../../framework/core.js';
 import { store } from '../../../framework/state.js';
-import { TodoItem } from './TodoItem.js';
+
+export const TodoItem = (todo) => {
+  const { editingId, editingValue } = store.getState();
+  const isEditing = editingId === todo.id;
+
+  /* children are ALWAYS length 2, just toggled via style */
+  const children = [
+    createVNode('div', { class: 'view', ondblclick: (e) => editeView(e, todo) }, [
+      createVNode('input', { class: 'toggle', onchange: () => checkbox(todo), type: 'checkbox', checked: todo.completed }),
+      createVNode('label', {}, todo.text),
+      createVNode('button', { class: 'destroy', onclick: () => destroy(todo) })
+    ]),
+
+    createVNode('input', {
+      class: 'edit',
+      oninput: (e) => editInput(e, todo),
+      key: 'edit',
+      value: isEditing ? editingValue : todo.text,
+      style: { display: isEditing ? '' : 'none' },
+      onkeydown: (e) => editInp(e, todo),
+      onblur: () => editInpblur(todo),
+      ref: isEditing
+        ? (el) => {
+          if (el) {
+            el.focus();
+            // el.setSelectionRange(el.value.length, el.value.length);
+          }
+        }
+        : null
+    })
+  ];
+
+  return createVNode('li', {
+    class: `${todo.completed ? 'completed' : ''}${isEditing ? ' editing' : ''}`,
+    'data-testid': 'todo-item',
+    key: todo.id                       // helps the diff algorithm
+  }, children);
+};
 
 /* ---------- UI ---------- */
 export const TodoList = (items) =>
   createVNode('ul', { class: 'todo-list' }, items.map(TodoItem));
 
 /* ---------- behaviour ---------- */
-export const setupTodoListEvents = (todos) => {
-  todos.forEach(setupTodoItemEvents);
-};
+const editeView = (e, todo) => {
+  if (e.target.type === 'checkbox') return;
+  store.setState({ ...store.getState(), editingId: todo.id, editingValue: todo.text });
+}
+const editInput = e => {
+  store.setState({ ...store.getState(), editingValue: e.target.value });
+}
 
-function setupTodoItemEvents(todo) {
-  const root = document.querySelector(`[data-todo-id="${todo.id}"]`);
-  if (!root) return;
-
-  const view = root.querySelector('.view');
-  const checkbox = root.querySelector('.toggle');
-  const destroy = root.querySelector('.destroy');
-  const editInp = root.querySelector('.edit');
-
-  /* dbl-click label → edit mode */
-  events.on(view, 'dblclick', (e) => {
-    if (e.target.type === 'checkbox') return;
-    store.setState({ ...store.getState(), editingId: todo.id, editingValue: todo.text });
+const checkbox = (todo) => {
+  const { todos } = store.getState();
+  store.setState({
+    ...store.getState(),
+    todos: todos.map(t => t.id === todo.id ? { ...t, completed: !t.completed } : t)
   });
+}
 
-  /* checkbox toggle */
-  events.on(checkbox, 'change', () => {
-    const { todos } = store.getState();
+/* destroy */
+const destroy = (todo) => {
+  const { todos } = store.getState();
+  store.setState({ ...store.getState(), todos: todos.filter(t => t.id !== todo.id) })
+}
+
+
+const editInp = (e, todo) => {
+  if (e.key === 'Enter') saveEdit(todo);
+}
+const editInpblur = (todo) => {
+  const { editingId } = store.getState();
+  if (editingId === todo.id) cancelEdit();
+}
+
+
+function saveEdit(todo) {
+  const { editingValue, todos } = store.getState();
+  const text = editingValue.trim();
+
+  if (!text) {            // empty → delete
     store.setState({
       ...store.getState(),
-      todos: todos.map(t => t.id === todo.id ? { ...t, completed: !t.completed } : t)
-    });
-  });
-
-  /* destroy */
-  events.on(destroy, 'click', () => {
-    const { todos } = store.getState();
-    store.setState({ ...store.getState(), todos: todos.filter(t => t.id !== todo.id) });
-  });
-
-  /* edit field */
-  events.on(editInp, 'input', e => {
-    store.setState({ ...store.getState(), editingValue: e.target.value });
-  });
-
-  events.on(editInp, 'keydown', e => {
-    if (e.key === 'Enter') saveEdit();
-  });
-  events.on(editInp, 'blur', () => {
-    const { editingId } = store.getState();
-    if (editingId === todo.id) cancelEdit();
-  });
-
-  function saveEdit() {
-    const { editingValue, todos } = store.getState();
-    const text = editingValue.trim();
-
-    if (!text) {            // empty → delete
-      store.setState({
-        ...store.getState(),
-        todos: todos.filter(t => t.id !== todo.id),
-        editingId: null, editingValue: ''
-      });
-      return;
-    }
-
-    store.setState({
-      ...store.getState(),
-      todos: todos.map(t => t.id === todo.id ? { ...t, text } : t),
+      todos: todos.filter(t => t.id !== todo.id),
       editingId: null, editingValue: ''
     });
+    return;
   }
 
-  function cancelEdit() {
-    store.setState({ ...store.getState(), editingId: null, editingValue: '' });
-  }
+  store.setState({
+    ...store.getState(),
+    todos: todos.map(t => t.id === todo.id ? { ...t, text } : t),
+    editingId: null, editingValue: ''
+  });
+}
+
+
+function cancelEdit() {
+  store.setState({ ...store.getState(), editingId: null, editingValue: '' });
 }

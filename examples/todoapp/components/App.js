@@ -16,13 +16,14 @@ export const App = () => {
   const activeLen = todos.filter(todo => !todo.completed).length;
   const completedLen = todos.length - activeLen;
 
-  return createVNode('div', { class: 'todoapp' }, [
+  return createVNode('section', { class: 'todoapp' }, [
     Header(),
-    todos.length && createVNode('section', { class: 'main' }, [
+    todos.length && createVNode('main', { class: 'main' }, [
       visible.length && createVNode('input', {
         id: 'toggle-all',
         class: 'toggle-all',
         type: 'checkbox',
+        onclick: setupAppEvents,
         checked: activeLen === 0
       }),
       visible.length && createVNode('label', {
@@ -37,16 +38,10 @@ export const App = () => {
 
 /* ---------- behaviour ---------- */
 export const setupAppEvents = () => {
-  const toggle = document.getElementById('toggle-all');
-  if (!toggle) return;
-
-  events.on(toggle, 'click', () => {
-    
     const { todos } = store.getState();
     const completeAll = todos.some(todo => !todo.completed);
     store.setState({
       ...store.getState(),
       todos: todos.map(todo => ({ ...todo, completed: completeAll }))
     });
-  });   
-};
+}

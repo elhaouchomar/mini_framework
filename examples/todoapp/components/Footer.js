@@ -14,34 +14,24 @@ export const Footer = (activeCnt, filter) =>
       ['completed', 'Completed']
     ].map(([key, label]) =>
       createVNode('li', {}, [
-        createVNode('a', { 'data-filter': key, class: filter === key ? 'selected' : '' }, label)
+        createVNode('a', { 'data-filter': key, onclick:(e) => setupFooterEvents(e,label) , class: filter === key ? 'selected' : '' }, label)
       ]))
     ),
 
-    
-    createVNode('button', { class: 'clear-completed' }, 'Clear completed')
+
+    createVNode('button', { class: 'clear-completed', onclick: clearCompleted }, 'Clear completed')
   ]);
 
 /* ---------- behaviour ---------- */
-export const setupFooterEvents = () => {
-  ['all', 'active', 'completed'].forEach(key => {
-    const link = document.querySelector(`a[data-filter="${key}"]`);
-    if (link) {
-      events.on(link, 'click', e => {
-        e.preventDefault();
-        updateFilter(key);
-      });
-    }
-  });
+export const setupFooterEvents = (e,label)=> {
+  e.preventDefault();
+  updateFilter(label.toLowerCase());
+}
 
-  const clearBtn = document.querySelector('.clear-completed');
-  if (clearBtn) {
-    events.on(clearBtn, 'click', () => {
-      const { todos } = store.getState();
-      store.setState({
-        ...store.getState(),
-        todos: todos.filter(t => !t.completed)
-      });
-    });
-  }
-};
+const clearCompleted = () => {
+  const { todos } = store.getState();
+  store.setState({
+    ...store.getState(),
+    todos: todos.filter(t => !t.completed)
+  });
+}

@@ -5,23 +5,20 @@ import { store } from '../../../framework/state.js';
 export const Header = () =>
   createVNode('header', {}, [
     createVNode('h1', {}, 'todos'),
-    createVNode('input', { name: 'to do input', class: 'new-todo', placeholder: 'What needs doing?', autofocus: true })
+    createVNode('input', { name: 'to do input', onkeydown: (e) => setupHeaderEvents(e), class: 'new-todo', placeholder: 'What needs doing?', autofocus: true })
   ]);
 
-export const setupHeaderEvents = () => {
-  const input = document.querySelector('.new-todo');
-  if (!input) return;
+export const setupHeaderEvents = e => {
+  if (!e) return
 
-  events.on(input, 'keydown', e => {
-    if (e.key !== 'Enter') return;
-    const text = e.target.value.trim();
-    if (text.length < 2) return; 
+  if (e?.key !== 'Enter') return;
+  const text = e.target.value.trim();
+  if (text.length < 2) return;
 
-    const { todos } = store.getState();
-    store.setState({
-      ...store.getState(),
-      todos: [...todos, { id: Date.now(), text, completed: false }]
-    });
-    e.target.value = '';
+  const { todos } = store.getState();
+  store.setState({
+    ...store.getState(),
+    todos: [...todos, { id: Date.now(), text, completed: false }]
   });
-};
+  e.target.value = '';
+}

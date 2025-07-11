@@ -12,7 +12,7 @@ export const createVNode = (tag, attrs = {}, children = []) => ({ //- this a vir
 let currentVNode = null;
 let rootElement = null;
 
-export const render = (vnode, container) => { //- this function takes a virtual node and a container element to render it into
+export const render = (vnode, container = document.body) => { //- this function takes a virtual node and a container element to render it into
   if (!container || !(container instanceof HTMLElement)) {
     throw new Error('Invalid container element');
   }
@@ -39,11 +39,10 @@ const createDOM = (vnode) => {
 
   // Set attributes and event handlers using event system
   for (const [key, value] of Object.entries(vnode.attrs || {})) {
+    if (key === 'key') continue;
+
     if (key.startsWith('on') && typeof value === 'function') {
-      const eventType = key.substring(2).toLowerCase();
-      events.on(el, eventType, value); //- register event handler using our event system
-    } else if (key === 'ref' && typeof value === 'function') {
-      value(el); //- call ref value function, so we can get a reference to the DOM element
+      el[key] = value
     } else if (key === 'value' || key === 'checked' || key === 'disabled') {
       el.value = value;
     } else if (value !== undefined && value !== null) {
@@ -127,14 +126,14 @@ const diffChildren = (oldChildren = [], newChildren = []) => {
 
     if (!newChild) { //- for sure we have oldChild=true from to the loop condition
       patches[oldIdx] = { type: 'REMOVE' };
-      oldIdx++; 
+      oldIdx++;
       continue;
     }
 
     // no old node here → insert / replace
     if (!oldChild) {
       patches[oldIdx] = { type: 'REPLACE', node: newChild };
-      oldIdx++; 
+      oldIdx++;
       newIdx++;
       continue;
     }
@@ -194,17 +193,8 @@ const applyPatches = (domNode, patches) => {
     case 'UPDATE':
       if (patches.attrs) {
         for (const [key, value] of Object.entries(patches.attrs)) {
-          if (value === undefined) {
-            if (key.startsWith('on')) {
-
-              // Remove event handler using our event system
-              const eventType = key.substring(2).toLowerCase();
-              events.off(domNode, eventType);
-            } else {
-              domNode.removeAttribute(key);
-            }
-          }
-          else if (key === 'value') {
+          
+           if (key === 'value') {
             // Only update if value actually changed
             if (domNode.value !== value) {
               domNode.value = value;
@@ -214,13 +204,7 @@ const applyPatches = (domNode, patches) => {
             domNode.checked = value;
           }
           else if (key.startsWith('on') && typeof value === 'function') {
-            // Update event handler using our event system
-            const eventType = key.substring(2).toLowerCase();
-            events.off(domNode, eventType); // Remove old handler
-            events.on(domNode, eventType, value); // Add new handler
-          }
-          else if (key === 'ref' && typeof value === 'function') {
-            value(domNode);
+            domNode[key] = value
           }
           else {
             domNode.setAttribute(key, value);
