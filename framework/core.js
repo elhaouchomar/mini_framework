@@ -13,11 +13,13 @@ let currentVNode = null;
 let rootElement = null;
 
 export const render = (vnode, container = document.body) => { //- this function takes a virtual node and a container element to render it into
+  
   if (!container || !(container instanceof HTMLElement)) {
     throw new Error('Invalid container element');
   }
   if (!currentVNode) { //- If this is the first render, it creates a real DOM from the vnode using createDOM() and mounts it.
     // Initial render
+    
     const dom = createDOM(vnode); //- converts the virtual node into a real DOM element
     container.innerHTML = '';
     container.appendChild(dom);
@@ -193,8 +195,7 @@ const applyPatches = (domNode, patches) => {
     case 'UPDATE':
       if (patches.attrs) {
         for (const [key, value] of Object.entries(patches.attrs)) {
-          
-           if (key === 'value') {
+          if (key === 'value') {
             // Only update if value actually changed
             if (domNode.value !== value) {
               domNode.value = value;

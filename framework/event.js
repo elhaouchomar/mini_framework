@@ -4,19 +4,6 @@ export class EventManager {
     this.rootListeners = new Set(); // eventType already delegated?
   }
 
-  /* Delegation root → bubbles up until matching _eventId */
-  handleDelegatedEvent(e) {
-    let node = e.target;
-    while (node && node !== document) {
-      const id = node._eventId;
-      if (id && this.handlers.has(id)) {
-        const map = this.handlers.get(id);
-        const fn = map.get(e.type);
-        if (fn) { fn.call(node, e); return; }
-      }
-      node = node.parentElement;
-    }
-  }
 
   /* Public helpers ------------------------------------------------ */
   on(el, type, fn) {

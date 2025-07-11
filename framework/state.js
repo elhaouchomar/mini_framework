@@ -3,8 +3,6 @@
 let state = {
   todos: [],
   filter: 'all',
-  editingId: null,
-  editingValue: null
 };
 
 let subscribers = [];

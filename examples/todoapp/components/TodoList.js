@@ -5,7 +5,6 @@ export const TodoItem = (todo) => {
   const { editingId, editingValue } = store.getState();
   const isEditing = editingId === todo.id;
 
-  /* children are ALWAYS length 2, just toggled via style */
   const children = [
     createVNode('div', { class: 'view', ondblclick: (e) => editeView(e, todo) }, [
       createVNode('input', { class: 'toggle', onchange: () => checkbox(todo), type: 'checkbox', checked: todo.completed }),
@@ -14,21 +13,22 @@ export const TodoItem = (todo) => {
     ]),
 
     createVNode('input', {
+      onfocus: (e) => {
+        e.target.setSelectionRange(e.target.value.length, e.target.value.length)
+      },
       class: 'edit',
-      oninput: (e) => editInput(e, todo),
       key: 'edit',
       value: isEditing ? editingValue : todo.text,
       style: { display: isEditing ? '' : 'none' },
       onkeydown: (e) => editInp(e, todo),
       onblur: () => editInpblur(todo),
-      ref: isEditing
+       ref: isEditing
         ? (el) => {
-          if (el) {
+          if (el) {                        
             el.focus();
-            // el.setSelectionRange(el.value.length, el.value.length);
           }
         }
-        : null
+        : null 
     })
   ];
 
@@ -47,10 +47,9 @@ export const TodoList = (items) =>
 const editeView = (e, todo) => {
   if (e.target.type === 'checkbox') return;
   store.setState({ ...store.getState(), editingId: todo.id, editingValue: todo.text });
+  
 }
-const editInput = e => {
-  store.setState({ ...store.getState(), editingValue: e.target.value });
-}
+
 
 const checkbox = (todo) => {
   const { todos } = store.getState();
@@ -68,7 +67,11 @@ const destroy = (todo) => {
 
 
 const editInp = (e, todo) => {
-  if (e.key === 'Enter') saveEdit(todo);
+  if (e.key === 'Enter') {
+    saveEdit(todo);
+    return
+  } 
+  store.setState({ ...store.getState(), editingValue: e.target.value });
 }
 const editInpblur = (todo) => {
   const { editingId } = store.getState();
