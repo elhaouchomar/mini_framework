@@ -14,7 +14,6 @@ export const App = () => {
         true);
 
   const activeLen = todos.filter(todo => !todo.completed).length;
-  const completedLen = todos.length - activeLen;
 
   return createVNode('section', { class: 'todoapp' }, [
     Header(),
