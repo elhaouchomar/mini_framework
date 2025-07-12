@@ -15,13 +15,7 @@ let currentVNode = null;
 let rootElement = null;
 
 export const render = (vnode, container = document.body) => { //- this function takes a virtual node and a container element to render it into
-  // simple: if the root is (or becomes) a fragment, re-draw from scratch
-  if (currentVNode?.tag === FRAGMENT || vnode.tag === FRAGMENT) {
-    container.innerHTML = '';
-    container.appendChild(createDOM(vnode));
-    currentVNode = vnode;
-    return;
-  }
+
   if (!container || !(container instanceof HTMLElement)) {
     throw new Error('Invalid container element');
   }
@@ -33,9 +27,10 @@ export const render = (vnode, container = document.body) => { //- this function 
     container.appendChild(dom);
     rootElement = container;
   } else {
+     const domRoot = currentVNode.tag === FRAGMENT ? rootElement : rootElement.firstChild;
     //- currentVNode is full already so we update using diffing
     const patches = diff(currentVNode, vnode);
-    applyPatches(rootElement.firstChild, patches);
+    applyPatches(domRoot, patches);
   }
   currentVNode = vnode;
 };
@@ -49,6 +44,8 @@ const createDOM = (vnode) => {
   if (vnode.tag === FRAGMENT) {
     const frag = document.createDocumentFragment();
     (vnode.children || []).forEach(c => frag.appendChild(createDOM(c)));
+    console.log("--------------------------------------------->", frag);
+    
     return frag;
   }
 
@@ -60,12 +57,8 @@ const createDOM = (vnode) => {
 
     if (key.startsWith('on') && typeof value === 'function') {
       el[key] = value
-    } else if (key === 'value') {
+    } else if (key === 'value' || key === 'checked' || key === 'disabled') {
       el.value = value;
-    } else if (key === 'checked') {
-      el.checked = value;
-    } else if (key === 'disabled') {
-      el.disabled = value;
     } else if (value !== undefined && value !== null) {
       el.setAttribute(key, value);
     }
@@ -91,6 +84,14 @@ const diff = (oldVNode, newVNode) => { //- oldVNode: the previous virtual node (
     return oldVNode !== newVNode
       ? { type: 'TEXT', value: newVNode }
       : null;
+  }
+
+  if (oldVNode.tag === FRAGMENT || newVNode.tag === FRAGMENT) {
+    return {
+      type: 'FRAGMENT',
+      children: diffChildren(oldVNode.children || [],
+        newVNode.children || [])
+    };
   }
 
   if (oldVNode.tag !== newVNode.tag) {
@@ -276,6 +277,54 @@ const applyPatches = (domNode, patches) => {
         }
       }
       break;
+
+    /* fragment root ------------------------------------------- */
+    case 'FRAGMENT': {
+      const domChildren = Array.from(domNode.childNodes); // container’s kids
+
+      /* reuse the existing child-patch logic */
+      patches.children?.forEach((childPatch, i) => {
+        if (!childPatch) return;
+
+        /* REMOVE ------------------------------------------------*/
+        if (childPatch.type === 'REMOVE') {
+          if (i < domChildren.length) {
+            const childToRemove = domChildren[i];
+            events.cleanupElement(childToRemove);
+            domNode.removeChild(childToRemove);
+          }
+          return;
+        }
+
+        /* REPLACE ----------------------------------------------*/
+        if (childPatch.type === 'REPLACE') {
+          const newChild = createDOM(childPatch.node);
+          if (i < domChildren.length) {
+            const oldChild = domChildren[i];
+            events.cleanupElement(oldChild);
+            domNode.replaceChild(newChild, oldChild);
+          } else {
+            domNode.appendChild(newChild);
+          }
+          return;
+        }
+
+        /* UPDATE / TEXT / FRAGMENT -----------------------------*/
+        if (i < domChildren.length) {
+          applyPatches(domChildren[i], childPatch);
+        } else {
+          domNode.appendChild(createDOM(childPatch.node));
+        }
+      });
+
+      /* trim excess DOM nodes if new list is shorter */
+      while (domNode.childNodes.length > (patches.children?.length || 0)) {
+        const extra = domNode.lastChild;
+        events.cleanupElement(extra);
+        domNode.removeChild(extra);
+      }
+      break;
+    }
   }
 };
 
