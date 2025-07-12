@@ -31,7 +31,7 @@ export const App = () => {
         visible.length && createVNode('label', {
           for: 'toggle-all',
           class: 'toggle-all-label'
-        }, 'Mark all as complete'),
+        }, 'Toggle All Input'),
         TodoList(visible)
       ]),
       todos.length && Footer(activeLen, filter)
