@@ -43,9 +43,7 @@ const createDOM = (vnode) => {
   /* FRAGMENT → just recurse into its children */
   if (vnode.tag === FRAGMENT) {
     const frag = document.createDocumentFragment();
-    (vnode.children || []).forEach(c => frag.appendChild(createDOM(c)));
-    console.log("--------------------------------------------->", frag);
-    
+    (vnode.children || []).forEach(c => frag.appendChild(createDOM(c)));    
     return frag;
   }
 
