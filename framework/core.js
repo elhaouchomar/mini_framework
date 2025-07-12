@@ -23,8 +23,8 @@ let currentVNode = null;
 let rootElement = null;
 
 /* -----------------------------------------------------------------
- * render()
- * ----------------------------------------------------------------- */
+* render()
+* ----------------------------------------------------------------- */
 export const render = (vnode, container = document.body) => {
   if (!container || !(container instanceof HTMLElement))
     throw new Error('Invalid container element');

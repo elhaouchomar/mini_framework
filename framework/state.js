@@ -1,40 +1,29 @@
-// State Managment
+let state = {};
 
-let state = {
-  todos: [],
-  filter: 'all',
-};
-
+/* subscriber list */
 let subscribers = [];
 
 export const store = {
   getState() {
-    // return shallow copy
-    
     return { ...state };
   },
 
-  setState(newState) {
-    // Create a new state object to ensure change detection
-   
-    state = {
-      // ...state,
-      ...newState,
-      // todos: newState.todos ? [...newState.todos] : state.todos
-    };
-
-
-    // Notify all subscribers
-    subscribers.forEach(subscriber => {
-      subscriber()});
+  setState(partial) {
+    state = { ...state, ...partial };   // simple, generic merge
+    subscribers.forEach(fn => fn());    // notify after every commit
   },
-  
-  subscribe(callback) {
-    // we have just mount function in the app.js
-    subscribers.push(callback);
+
+  /* subscribe returns an "unsubscribe" function */
+  subscribe(fn) {
+    subscribers.push(fn);
     return () => {
-      // we gonna need it in the Bomberman game to unmount
-       subscribers = subscribers.filter(sub => sub !== callback);
-     };
+      subscribers = subscribers.filter(sub => sub !== fn);
+    };
+  },
+
+  /* (optional) completely replace state – handy for tests or reset */
+  reset(newState = {}) {
+    state = { ...newState };
+    subscribers.forEach(fn => fn());
   }
 };
