@@ -7,50 +7,41 @@ export const TodoItem = (todo) => {
 
   const children = [
     /* normal view ------------------------------------------------ */
-    createVNode('div',
-      { class: 'view', ondblclick: (e) => editeView(e, todo) }, [
-      createVNode('input', {
-        class: 'toggle',
-        type: 'checkbox',
-        checked: todo.completed,
-        onchange: () => toggle(todo)
-      }),
+    createVNode('div', { class: 'view', ondblclick: (e) => editeView(e, todo) }, [
+      createVNode('input', { class: 'toggle', onchange: () => checkbox(todo), type: 'checkbox', checked: todo.completed }),
       createVNode('label', {}, todo.text),
       createVNode('button', { class: 'destroy', onclick: () => destroy(todo) })
     ]),
 
     /* edit input ------------------------------------------------- */
     createVNode('input', {
+      onfocus: (e) => e.target.setSelectionRange(e.target.value.length, e.target.value.length),
       class: 'edit',
       key: 'edit',
       value: isEditing ? editingValue : todo.text,
       style: { display: isEditing ? '' : 'none' },
-      oninput: editInput,
-      onkeydown: (e) => editKey(e, todo),
-      onblur: () => editBlur(todo)
+      onkeydown: (e) => editInp(e, todo),
+      onblur: () => editInpblur(todo),
+      ref: isEditing ? (el) => { if (el) el.focus(); } : null
     })
   ];
 
   return createVNode('li', {
     class: `${todo.completed ? 'completed' : ''}${isEditing ? ' editing' : ''}`,
-    key: todo.id,
-    'data-testid': 'todo-item'
+    'data-testid': 'todo-item',
+    key: todo.id
   }, children);
 };
 
-/* list wrapper -------------------------------------------------- */
+/* ---------- UI ---------- */
 export const TodoList = (items) =>
   createVNode('ul', { class: 'todo-list' }, items.map(TodoItem));
 
-/* behaviour ----------------------------------------------------- */
+/* ---------- behaviour ---------- */
 const editeView = (e, todo) => {
   if (e.target.type === 'checkbox') return;
 
-  store.setState({
-    ...store.getState(),
-    editingId: todo.id,
-    editingValue: todo.text
-  });
+  store.setState({ ...store.getState(), editingId: todo.id, editingValue: todo.text });
 
   /* focus after DOM flips to editing */
   const input = document.querySelector('li.editing .edit');
@@ -62,32 +53,31 @@ const editeView = (e, todo) => {
   attachOutsideClickHandler(todo);
 };
 
-const editInput = (e) =>
-  store.setState({ ...store.getState(), editingValue: e.target.value });
-
-const toggle = (todo) => {
+const checkbox = (todo) => {
   const { todos } = store.getState();
   store.setState({
     ...store.getState(),
-    todos: todos.map(t =>
-      t.id === todo.id ? { ...t, completed: !t.completed } : t)
+    todos: todos.map(t => t.id === todo.id ? { ...t, completed: !t.completed } : t)
   });
 };
 
+/* destroy */
 const destroy = (todo) => {
   const { todos } = store.getState();
-  store.setState({
-    ...store.getState(),
-    todos: todos.filter(t => t.id !== todo.id)
-  });
+  store.setState({ ...store.getState(), todos: todos.filter(t => t.id !== todo.id) });
 };
 
-const editKey = (e, todo) => {
-  if (e.key === 'Enter') saveEdit(todo);
+const editInp = (e, todo) => {
+  if (e.key === 'Enter') {
+    saveEdit(todo);
+    return;
+  }
+  store.setState({ ...store.getState(), editingValue: e.target.value });
 };
 
-const editBlur = (todo) => {
-  if (store.getState().editingId === todo.id) cancelEdit();
+const editInpblur = (todo) => {
+  const { editingId } = store.getState();
+  if (editingId === todo.id) cancelEdit();
 };
 
 /* save / cancel helpers ---------------------------------------- */
@@ -95,7 +85,7 @@ function saveEdit(todo) {
   const { editingValue, todos } = store.getState();
   const text = editingValue.trim();
 
-  if (!text) {
+  if (!text) { // empty → delete
     store.setState({
       ...store.getState(),
       todos: todos.filter(t => t.id !== todo.id),
@@ -114,24 +104,21 @@ function saveEdit(todo) {
 }
 
 function cancelEdit() {
-  store.setState({
-    ...store.getState(),
-    editingId: null, editingValue: ''
-  });
+  store.setState({ ...store.getState(), editingId: null, editingValue: '' });
   detachOutsideClickHandler();
 }
 
+/* ---------- outside-click logic ---------- */
 let outsideClickHandler = null;
 let previousDocHandler = null;
 
 function attachOutsideClickHandler(todo) {
-  if (outsideClickHandler) return;          // already active
+  if (outsideClickHandler) return; // already active
 
   outsideClickHandler = (ev) => {
     const editingLi = document.querySelector('li.editing');
     if (editingLi && !editingLi.contains(ev.target)) {
-      cancelEdit(todo);  
-      detachOutsideClickHandler();
+      cancelEdit();                // discard on outside click
     }
   };
 

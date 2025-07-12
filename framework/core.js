@@ -8,16 +8,26 @@ export const createVNode = (tag, attrs = {}, children = []) => ({ //- this a vir
   children: Array.isArray(children) ? children.filter(Boolean) : [children].filter(Boolean)   //- children can be strings, numbers, or nested virtual nodes
 });
 
+export const FRAGMENT = Symbol('fragment');
+
 // DOM renderer with diffing algorithm and event handling
 let currentVNode = null;
 let rootElement = null;
 
 export const render = (vnode, container = document.body) => { //- this function takes a virtual node and a container element to render it into
+  // simple: if the root is (or becomes) a fragment, re-draw from scratch
+  if (currentVNode?.tag === FRAGMENT || vnode.tag === FRAGMENT) {
+    container.innerHTML = '';
+    container.appendChild(createDOM(vnode));
+    currentVNode = vnode;
+    return;
+  }
   if (!container || !(container instanceof HTMLElement)) {
     throw new Error('Invalid container element');
   }
   if (!currentVNode) { //- If this is the first render, it creates a real DOM from the vnode using createDOM() and mounts it.
     // Initial render
+
     const dom = createDOM(vnode); //- converts the virtual node into a real DOM element
     container.innerHTML = '';
     container.appendChild(dom);
@@ -33,6 +43,13 @@ export const render = (vnode, container = document.body) => { //- this function 
 const createDOM = (vnode) => {
   if (typeof vnode === 'string' || typeof vnode === 'number') { //- if the vnode is a string or number, it creates a text node
     return document.createTextNode(vnode);
+  }
+
+  /* FRAGMENT → just recurse into its children */
+  if (vnode.tag === FRAGMENT) {
+    const frag = document.createDocumentFragment();
+    (vnode.children || []).forEach(c => frag.appendChild(createDOM(c)));
+    return frag;
   }
 
   const el = document.createElement(vnode.tag); //- creates a new DOM element based on the tag in the vnode
@@ -193,8 +210,7 @@ const applyPatches = (domNode, patches) => {
     case 'UPDATE':
       if (patches.attrs) {
         for (const [key, value] of Object.entries(patches.attrs)) {
-          
-           if (key === 'value') {
+          if (key === 'value') {
             // Only update if value actually changed
             if (domNode.value !== value) {
               domNode.value = value;

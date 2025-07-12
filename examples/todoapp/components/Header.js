@@ -3,9 +3,25 @@ import { store } from '../../../framework/state.js';
 
 /* ------- UI ------- */
 export const Header = () =>
-  createVNode('header', {}, [
+  createVNode('header', { class: 'header', 'data-testid': 'header' }, [
     createVNode('h1', {}, 'todos'),
-    createVNode('input', { name: 'to do input', onkeydown: (e) => setupHeaderEvents(e), class: 'new-todo', placeholder: 'What needs doing?', autofocus: true })
+
+    createVNode('div', { class: 'input-container' }, [
+      createVNode('input', {
+        id: 'todo-input',
+        class: 'new-todo',
+        type: 'text',
+        'data-testid': 'text-input',
+        placeholder: 'What needs to be done?',
+        value: "",
+        onkeydown: setupHeaderEvents
+      }),
+
+      createVNode('label', {
+        class: 'visually-hidden',
+        for: 'todo-input'
+      }, 'New Todo Input')
+    ])
   ]);
 
 export const setupHeaderEvents = e => {

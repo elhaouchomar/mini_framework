@@ -4,7 +4,7 @@ import { updateFilter } from '../app.js';   // from entry module
 
 /* ---------- UI ---------- */
 export const Footer = (activeCnt, filter) =>
-  createVNode('footer', { class: 'footer' }, [
+  createVNode('footer', { class: 'footer', 'data-testid': 'footer' }, [
     createVNode('span', { class: 'todo-count' },
       `${activeCnt} item${activeCnt > 1 ? 's' : ''} left`),
 

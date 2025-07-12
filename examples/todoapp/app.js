@@ -30,7 +30,7 @@ window.onhashchange = () => {
 
 /* ---------- render loop ---------- */
 function mount() {
-  render(App());
+  render(App(), document.body);
 }
 
 /* initial + subscribe */
