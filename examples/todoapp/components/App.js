@@ -1,10 +1,9 @@
-import { createVNode, FRAGMENT } from '../../../framework/core.js';
+import { createVNode } from '../../../framework/core.js';
 import { store } from '../../../framework/state.js';
 import { Header } from './Header.js';
 import { TodoList } from './TodoList.js';
 import { Footer } from './Footer.js';
 import { FooterInfo } from './FooterInfo.js';
-import { Sidebar } from './SideBar.js';
 
 /* ---------- UI ---------- */
 export const App = () => {
@@ -16,7 +15,6 @@ export const App = () => {
         true);
 
   const activeLen = todos.filter(todo => !todo.completed).length;
-  const completedLen = todos.length - activeLen;
 
   function SetupSection() {
 
@@ -40,12 +38,10 @@ export const App = () => {
     ])
   }
 
-  return createVNode(FRAGMENT, {}, [
-    Sidebar(),
+  return createVNode('div', {id: 'root'}, [
     SetupSection(),
     FooterInfo()
   ]);
-
 };
 
 /* ---------- behaviour ---------- */
@@ -57,5 +53,3 @@ export const setupAppEvents = () => {
     todos: todos.map(todo => ({ ...todo, completed: completeAll }))
   });
 }
-
-

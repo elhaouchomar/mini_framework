@@ -1,21 +1,18 @@
 // Virtual DOM implementation with integrated event handling
 import { events } from './event.js';
 
-
 export const createVNode = (tag, attrs = {}, children = []) => ({ //- this a virtual DOM nodes factory function
   tag, //- DOM element type (e.g., 'div', 'span')
   attrs, //- attributes and event handlers (e.g., { class: 'my-class', onClick: () => {} })
   children: Array.isArray(children) ? children.filter(Boolean) : [children].filter(Boolean)   //- children can be strings, numbers, or nested virtual nodes
 });
 
-export const FRAGMENT = Symbol('fragment');
-
 // DOM renderer with diffing algorithm and event handling
 let currentVNode = null;
 let rootElement = null;
 
 export const render = (vnode, container = document.body) => { //- this function takes a virtual node and a container element to render it into
-
+  
   if (!container || !(container instanceof HTMLElement)) {
     throw new Error('Invalid container element');
   }
@@ -27,10 +24,9 @@ export const render = (vnode, container = document.body) => { //- this function 
     container.appendChild(dom);
     rootElement = container;
   } else {
-     const domRoot = currentVNode.tag === FRAGMENT ? rootElement : rootElement.firstChild;
     //- currentVNode is full already so we update using diffing
     const patches = diff(currentVNode, vnode);
-    applyPatches(domRoot, patches);
+    applyPatches(rootElement.firstChild, patches);
   }
   currentVNode = vnode;
 };
@@ -38,13 +34,6 @@ export const render = (vnode, container = document.body) => { //- this function 
 const createDOM = (vnode) => {
   if (typeof vnode === 'string' || typeof vnode === 'number') { //- if the vnode is a string or number, it creates a text node
     return document.createTextNode(vnode);
-  }
-
-  /* FRAGMENT → just recurse into its children */
-  if (vnode.tag === FRAGMENT) {
-    const frag = document.createDocumentFragment();
-    (vnode.children || []).forEach(c => frag.appendChild(createDOM(c)));    
-    return frag;
   }
 
   const el = document.createElement(vnode.tag); //- creates a new DOM element based on the tag in the vnode
@@ -82,14 +71,6 @@ const diff = (oldVNode, newVNode) => { //- oldVNode: the previous virtual node (
     return oldVNode !== newVNode
       ? { type: 'TEXT', value: newVNode }
       : null;
-  }
-
-  if (oldVNode.tag === FRAGMENT || newVNode.tag === FRAGMENT) {
-    return {
-      type: 'FRAGMENT',
-      children: diffChildren(oldVNode.children || [],
-        newVNode.children || [])
-    };
   }
 
   if (oldVNode.tag !== newVNode.tag) {
@@ -275,54 +256,6 @@ const applyPatches = (domNode, patches) => {
         }
       }
       break;
-
-    /* fragment root ------------------------------------------- */
-    case 'FRAGMENT': {
-      const domChildren = Array.from(domNode.childNodes); // container’s kids
-
-      /* reuse the existing child-patch logic */
-      patches.children?.forEach((childPatch, i) => {
-        if (!childPatch) return;
-
-        /* REMOVE ------------------------------------------------*/
-        if (childPatch.type === 'REMOVE') {
-          if (i < domChildren.length) {
-            const childToRemove = domChildren[i];
-            events.cleanupElement(childToRemove);
-            domNode.removeChild(childToRemove);
-          }
-          return;
-        }
-
-        /* REPLACE ----------------------------------------------*/
-        if (childPatch.type === 'REPLACE') {
-          const newChild = createDOM(childPatch.node);
-          if (i < domChildren.length) {
-            const oldChild = domChildren[i];
-            events.cleanupElement(oldChild);
-            domNode.replaceChild(newChild, oldChild);
-          } else {
-            domNode.appendChild(newChild);
-          }
-          return;
-        }
-
-        /* UPDATE / TEXT / FRAGMENT -----------------------------*/
-        if (i < domChildren.length) {
-          applyPatches(domChildren[i], childPatch);
-        } else {
-          domNode.appendChild(createDOM(childPatch.node));
-        }
-      });
-
-      /* trim excess DOM nodes if new list is shorter */
-      while (domNode.childNodes.length > (patches.children?.length || 0)) {
-        const extra = domNode.lastChild;
-        events.cleanupElement(extra);
-        domNode.removeChild(extra);
-      }
-      break;
-    }
   }
 };
 
