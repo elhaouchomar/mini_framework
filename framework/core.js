@@ -60,8 +60,12 @@ const createDOM = (vnode) => {
 
     if (key.startsWith('on') && typeof value === 'function') {
       el[key] = value
-    } else if (key === 'value' || key === 'checked' || key === 'disabled') {
+    } else if (key === 'value') {
       el.value = value;
+    } else if (key === 'checked') {
+      el.checked = value;
+    } else if (key === 'disabled') {
+      el.disabled = value;
     } else if (value !== undefined && value !== null) {
       el.setAttribute(key, value);
     }

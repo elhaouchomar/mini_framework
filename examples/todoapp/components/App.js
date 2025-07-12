@@ -41,7 +41,7 @@ export const App = () => {
   }
 
   return createVNode(FRAGMENT, {}, [
-    Sidebar(),
+    // Sidebar(),
     SetupSection(),
     FooterInfo()
   ]);
