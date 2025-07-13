@@ -1,8 +1,3 @@
-/* ───────────────────────── framework/core.js ────────────────────
-   Minimal virtual-DOM with diff/patch + events + ref callbacks
-   (uses queueMicrotask so the element exists before ref() fires)
-*/
-
 import { events } from './event.js';
 
 /* -----------------------------------------------------------------
@@ -52,9 +47,8 @@ const createDOM = (vnode) => {
   for (const [key, val] of Object.entries(vnode.attrs || {})) {
     if (key === 'key') continue;
 
-    /* queueMicrotask-based ref: */
     if (key === 'ref' && typeof val === 'function') {
-      queueMicrotask(() => val(el));
+      val(el)
       continue;
     }
 
@@ -170,7 +164,7 @@ const applyPatches = (dom, patch) => {
       if (patch.attrs) {
         for (const [k, v] of Object.entries(patch.attrs)) {
           if (k === 'ref' && typeof v === 'function') {
-            queueMicrotask(() => v(dom));
+            v(dom)
           } else if (k === 'value') {
             if (dom.value !== v) dom.value = v;
           } else if (k === 'checked') {
