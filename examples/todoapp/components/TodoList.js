@@ -1,4 +1,3 @@
-/* components/TodoList.js --------------------------------------- */
 import { createVNode, events } from '../../../framework/core.js';
 import { store } from '../../../framework/state.js';
 
@@ -12,11 +11,7 @@ export const TodoItem = (todo) => {
     class: 'view',
     ondblclick: e => {
       if (e.target.type === 'checkbox') return;
-      store.setState({
-        ...store.getState(),
-        editingId: todo.id,
-        editingValue: todo.text
-      });
+      store.setState({ ...store.getState(), editingId: todo.id, editingValue: todo.text });
     }
   }, [
     createVNode('input', {
@@ -36,22 +31,19 @@ export const TodoItem = (todo) => {
       class: 'destroy',
       onclick: () => {
         const { todos } = store.getState();
-        store.setState({
-          ...store.getState(),
-          todos: todos.filter(t => t.id !== todo.id)
-        });
+        store.setState({ ...store.getState(), todos: todos.filter(t => t.id !== todo.id) });
       }
     })
   ]);
 
-  /* edit input (always in DOM, only visible while editing) */
+  /* edit input (visible while editing) */
   const editInput = createVNode('input', {
     class: 'edit',
     value: isEditing ? editingValue : todo.text,
     key: 'edit',
     oninput: e => store.setState({ ...store.getState(), editingValue: e.target.value }),
     onkeydown: e => { if (e.key === 'Enter') commit(todo); },
-    onblur: () => commit(todo),
+    onblur: () => cancel(),                        // cancel on click-away
     ref: el => { if (isEditing && el) { el.focus(); el.selectionStart = el.value.length; } }
   });
 
@@ -62,7 +54,7 @@ export const TodoItem = (todo) => {
   }, [viewDiv, editInput]);
 };
 
-/* commit helper */
+/* save edits on Enter */
 function commit(todo) {
   const { editingId, editingValue, todos } = store.getState();
   if (editingId !== todo.id) return;
@@ -76,6 +68,11 @@ function commit(todo) {
     editingId: null,
     editingValue: ''
   });
+}
+
+/* cancel discards draft */
+function cancel() {
+  store.setState({ ...store.getState(), editingId: null, editingValue: '' });
 }
 
 /* ─────────── TodoList wrapper ─────────── */
