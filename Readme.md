@@ -392,3 +392,17 @@ See Section 9 for proposed features.  Current known issues:
 | SPA        | Single‑Page Application – navigates without full page reload. |
 
 ---
+
+## Credits
+
+Mini Framework created by:
+- [Mostafa EL HADROUBI](https://github.com/Mostafa-elhadroubi/)
+- [Omar EL-HAOUCH](https://github.com/elhaouchomar/)
+- [Ayoub AMMAR](https://github.com/kinoz01/)
+- [Zakaria ABDELALI](https://github.com/heyZakaria/)
+
+Part of [TodoMVC](http://todomvc.com)
+
+---
+
+For full documentation, see [`framework/Documentation.md`](framework/Documentation.md). 
