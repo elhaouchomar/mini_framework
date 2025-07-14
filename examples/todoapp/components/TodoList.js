@@ -95,6 +95,7 @@ function commit(todo) {
   if (editingId !== todo.id) return;
 
   const text = editingValue.trim();
+  if (text.length < 2 ) return
   store.setState({
     ...store.getState(),
     todos: text
