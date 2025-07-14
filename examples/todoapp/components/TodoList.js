@@ -1,19 +1,64 @@
 import { createVNode, events } from '../../../framework/core.js';
 import { store } from '../../../framework/state.js';
 
+
+
 /* ───────────────── TodoItem ───────────────── */
 export const TodoItem = (todo) => {
   const { editingId, editingValue } = store.getState();
   const isEditing = editingId === todo.id;
 
+
+  /* edit input render it just in Editing case */
+  const editInput = createVNode('div', { class: 'input-container' },
+    [createVNode('input', {
+      class: 'new-todo',
+      type: 'text',
+      value: isEditing ? editingValue : todo.text,
+      autofocus: isEditing,
+      key: 'edit',
+      oninput: e => store.setState({ ...store.getState(), editingValue: e.target.value }),
+      onkeydown: e => {
+        if (e.key === 'Enter') commit(todo);
+      },
+      onblur: () => { cancel(todo); },
+
+
+      ref: el => {
+        if (isEditing && el) {
+          // 0 setTimeout rir bach n7ato ref function in queue stack, so dom is fully rendered
+          setTimeout(() => {
+            el.focus();
+            // el.selectionStart = el.selectionEnd = el.value.length;
+          }, 0);
+        }
+      }
+    }, [])
+    ]);
+
+
   /* view (toggle-label-destroy) */
   const viewDiv = createVNode('div', {
     class: 'view',
+    // tabindex: '0',
     ondblclick: e => {
       if (e.target.type === 'checkbox') return;
-      store.setState({ ...store.getState(), editingId: todo.id, editingValue: todo.text });
-    }
-  }, [
+      e.preventDefault();
+
+      store.setState({
+        ...store.getState(),
+        editingId: todo.id,
+        editingValue: todo.text
+      });
+    },
+    /*   onblur: (e) => {
+  
+         if (e.target.type === 'input') return;
+  
+        commit(todo)
+      }, */
+
+  }, isEditing ? [editInput] : [
     createVNode('input', {
       class: 'toggle',
       type: 'checkbox',
@@ -26,7 +71,7 @@ export const TodoItem = (todo) => {
         });
       }
     }),
-    createVNode('label', {}, todo.text),
+    createVNode('label', { 'data-testid': 'todo-item-label' }, todo.text),
     createVNode('button', {
       class: 'destroy',
       onclick: () => {
@@ -36,22 +81,12 @@ export const TodoItem = (todo) => {
     })
   ]);
 
-  /* edit input (visible while editing) */
-  const editInput = createVNode('input', {
-    class: 'edit',
-    value: isEditing ? editingValue : todo.text,
-    key: 'edit',
-    oninput: e => store.setState({ ...store.getState(), editingValue: e.target.value }),
-    onkeydown: e => { if (e.key === 'Enter') commit(todo); },
-    onblur: () => cancel(),                        // cancel on click-away
-    ref: el => { if (isEditing && el) { el.focus(); el.selectionStart = el.value.length; } }
-  });
 
   return createVNode('li', {
-    class: `${todo.completed ? 'completed ' : ''}${isEditing ? 'editing' : ''}`,
+    class: `${todo.completed ? 'completed ' : ''}`,
     key: todo.id,
     'data-todo-id': 'todo-item'
-  }, [viewDiv, editInput]);
+  }, [viewDiv]);
 };
 
 /* save edits on Enter */
@@ -71,7 +106,9 @@ function commit(todo) {
 }
 
 /* cancel discards draft */
-function cancel() {
+function cancel(todo) {
+  const { editingId } = store.getState();
+  if (editingId !== todo.id) return;
   store.setState({ ...store.getState(), editingId: null, editingValue: '' });
 }
 

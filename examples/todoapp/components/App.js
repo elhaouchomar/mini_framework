@@ -21,17 +21,21 @@ export const App = () => {
     return createVNode('section', { class: 'todoapp', id: 'root' }, [
       Header(),
       createVNode('main', { class: 'main', 'data-testid': 'main' }, [
-        visible.length && createVNode('input', {
-          id: 'toggle-all',
-          class: 'toggle-all',
-          type: 'checkbox',
-          onclick: setupAppEvents,
-          checked: activeLen === 0
-        }),
-        visible.length && createVNode('label', {
-          for: 'toggle-all',
-          class: 'toggle-all-label'
-        }, 'Toggle All Input'),
+        createVNode('div', {
+          class: 'toggle-all-container' }, [
+
+          visible.length && createVNode('input', {
+            id: 'toggle-all',
+            class: 'toggle-all',
+            type: 'checkbox',
+            onclick: setupAppEvents,
+            checked: activeLen === 0
+          }),
+          visible.length && createVNode('label', {
+            class: 'toggle-all-label',
+            for: 'toggle-all'
+          }, 'Toggle All Input'),
+        ]),
         TodoList(visible)
       ]),
       todos.length && Footer(activeLen, filter)

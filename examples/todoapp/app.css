@@ -197,9 +197,7 @@ body {
   width: calc(100% - 43px);
 }
 
-.todo-list li.editing .view {
-  display: none;
-}
+
 
 .todo-list li .toggle {
   -webkit-appearance: none;
@@ -396,6 +394,7 @@ html .clear-completed:active {
 
 .toggle-all:focus + label,
 .toggle:focus + label,
+.input-conatiner:focus,
 :focus {
   box-shadow: 0 0 2px 2px #cf7d7d;
   outline: 0;

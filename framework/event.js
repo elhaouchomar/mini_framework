@@ -1,7 +1,6 @@
 export class EventManager {
   constructor() {
-    this.handlers = new Map();
-    this.rootListeners = new Set();
+    this.handlers = new Map(); // elementId ➜ Map(eventType ➜ handler)
   }
 
  // public helper
@@ -17,9 +16,9 @@ export class EventManager {
     }
   }
 
-  _genId() {
+ /*  _genId() {
     return `ev_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-  }
+  } */
 }
 
 export const events = new EventManager();
